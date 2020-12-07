@@ -1,0 +1,53 @@
+* {
+	box-sizing: border-box;
+}
+
+html, body {
+	font-size: 62.5%;
+	height: 100vh;
+	margin: 0;
+	width: 100vw;
+}
+
+body {
+	align-items: center;
+	display: flex;
+	font-family: sans-serif;
+	justify-content: center;
+}
+
+:root {
+
+}
+
+div.home-container {
+	align-items: center;
+	background-color: grey;
+	border-radius: 5px;
+	display: flex;
+	height: 20rem;
+	justify-content: center;
+	width: 20rem;
+}
+
+div.project-options {
+	align-items: center;
+	background-color: red;
+	border-radius: 5px;
+	display: none;
+	flex-direction: column;
+	font-size: 1.2rem;
+	height: 20rem;
+	justify-content: center;
+	width: 20rem;
+}
+
+div.project-container {
+	background-color: rgb(225, 225, 225);
+	border-radius: 5px;
+	display: none;
+	max-height: 600px;
+	overflow-y: auto;
+	text-align: center;
+	width: 1024px;
+}

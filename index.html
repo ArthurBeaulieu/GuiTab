@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>TabMaker</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+	<div id="page-content">
+	  <div id="home-container" class="home-container">
+			<button id="new-project-button">New project</button>
+		</div>
+		<div id="project-options" class="project-options">
+			<label for="project-name">Project name</label>
+			<input id="project-name" type="text" name="project-name" placeholder="My Project">
+			<label for="project-time-signature">Time signature</label>
+			<input id="project-time-signature" type="text" name="project-time-signature" placeholder="4/4">
+			<label for="guitar-type">Instrument</label>
+			<select id="guitar-type" type="text" name="guitar-type">
+				<option value="guitar">Guitar</option>
+				<option value="bass">Bass Guitar</option>
+			</select>
+			<button id="create-project">Create project</button>
+		</div>
+		<div id="project-container" class="project-container">
+			<canvas id="tab-canvas" height="900" width="900"></canvas>
+		</div>
+	</div>
+	<script type="module">
+		import GuiTab from './js/GuiTab.js';
+		import CustomEvents from './js/lib/CustomEvents.js';
+		import Shortcut from './js/lib/Shortcut.js';
+		window.Events = new CustomEvents();
+		window.Shortcut = new Shortcut();
+		window.GuiTab = new GuiTab();
+	</script>
+</body>
+</html>
