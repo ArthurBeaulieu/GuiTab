@@ -27,22 +27,26 @@ class TabMaker {
 			this._lineCount = 4;
 			this._strings = ['G', 'D', 'A', 'E'];
 		}
-		// Test area
-		this._drawTabLine(0);
-		this._drawTabLine(1);
-		this._drawTabLine(2);
 
 		this._initCursor();
+		this._refreshTab();
 	}
 
 
 	_events() {
-		Shortcut.register('ArrowRight', () => {
+		Shortcut.register('ArrowLeft', this._moveCursorLeft.bind(this));
+		Shortcut.register('ArrowRight', this._moveCursorRight.bind(this));
+		Shortcut.register('ArrowUp', this._moveCursorUp.bind(this));
+		Shortcut.register('ArrowDown', this._moveCursorDown.bind(this));
+	}
 
-		});
-		Shortcut.register('ArrowLeft', () => {
 
-		});
+	_refreshTab() {
+		this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+		this._drawTabLine(0);
+		this._drawTabLine(1);
+		this._drawTabLine(2);
+		this._drawCursor();
 	}
 
 
@@ -52,6 +56,7 @@ class TabMaker {
 		// TODO update canvas height according to line number
 
 		this._ctx.beginPath();
+		this._ctx.fillStyle = 'black';
 		this._ctx.strokeStyle = '#444444';
 		this._ctx.font = `${this._fontSize}px sans-serif`;
 		// Draw line first vertical bar
@@ -81,20 +86,49 @@ class TabMaker {
 			x: this._lineSpace,
 			y: (this._lineCount * this._lineSpace) - (this._lineSpace / 2)
 		};
-
-		this._ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-		this._ctx.rect(this._cursor.x, this._cursor.y, this._lineSpace, this._lineSpace);
-		this._ctx.fill();
 	}
 
 
 	_moveCursorLeft() {
+		if (this._cursor.x - this._lineSpace > 0) {
+			this._cursor.x -= this._lineSpace;
+		}
 
+		this._refreshTab();
 	}
 
 
 	_moveCursorRight() {
+		if (this._cursor.x + this._lineSpace < (900 - this._lineSpace)) {
+			this._cursor.x += this._lineSpace;
+		}
 
+		this._refreshTab();
+	}
+
+
+	_moveCursorUp() {
+		if (this._cursor.y - this._lineSpace > 0) {
+			this._cursor.y -= this._lineSpace;
+		}
+
+		this._refreshTab();
+	}
+
+
+	_moveCursorDown() {
+		if (this._cursor.y + this._lineSpace < this._lineCount * this._lineSpace) {
+			this._cursor.y += this._lineSpace;
+		}
+
+		this._refreshTab();
+	}
+
+
+	_drawCursor() {
+		this._ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+		this._ctx.rect(this._cursor.x, this._cursor.y, this._lineSpace, this._lineSpace);
+		this._ctx.fill();
 	}
 
 

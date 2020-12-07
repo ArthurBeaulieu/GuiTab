@@ -1,3 +1,6 @@
+'use strict';
+
+
 class Shortcut {
 
 
@@ -133,7 +136,6 @@ class Shortcut {
    * is found to keep browser behavior in case there is no regstered shortcut.</blockquote>
    * @param {event} event - The keyboard event (<code>keydown</code>, <code>keypress</code> and <code>keyup</code>) */
   _singleKeyEvent(event) {
-    console.log(event, this._singleKey)
     // Iterate over registered single key shortcut to fire it if one matches
     for (let i = 0; i < this._singleKey.length; ++i) {
       // Check that event is active and flatten key string to compare
@@ -323,13 +325,12 @@ class Shortcut {
           shiftKey: /shift/i.test(keyString)
         },
         modifierCount: this._getModifiersCount(keyString),
-        key: keyString[keyString.length - 1].toLowerCase(),
+        key: keyString.toLowerCase().replace('ctrl', '').replace('alt', '').replace('maj', '').replace(' ', ''),
         paused: false,
         fire: fire
       };
       // Save shortcut to its appropriated array
       if (this._getModifiersCount(keyString) === 0) {
-        shortcut.key = keyString.toLowerCase();
         this._singleKey.push(shortcut);
       } else {
         this._multiKey.push(shortcut);
