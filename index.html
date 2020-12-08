@@ -6,15 +6,18 @@
 	<link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 <body>
-	<div id="page-content">
-	  <div id="home-container" class="home-container">
+	<nav>
+		<h1>GuiTab</h1>
+	</nav>
+	<main id="page-content">
+		<div id="home-container" class="home-container">
 			<button id="new-project-button">New project</button>
 		</div>
 		<div id="project-options" class="project-options">
 			<label for="project-name">Project name</label>
-			<input id="project-name" type="text" name="project-name" placeholder="My Project">
+			<input id="project-name" type="text" name="project-name" placeholder="My Project" value="My Project">
 			<label for="project-time-signature">Time signature</label>
-			<input id="project-time-signature" type="text" name="project-time-signature" placeholder="4/4">
+			<input id="project-time-signature" type="text" name="project-time-signature" placeholder="4/4" value="4/4">
 			<label for="guitar-type">Instrument</label>
 			<select id="guitar-type" type="text" name="guitar-type">
 				<option value="guitar">Guitar</option>
@@ -23,9 +26,14 @@
 			<button id="create-project">Create project</button>
 		</div>
 		<div id="project-container" class="project-container">
-			<canvas id="tab-canvas" height="900" width="900"></canvas>
+			<div class="project-controls-container">
+
+			</div>
+			<div class="tab-container">
+				<canvas id="tab-canvas" height="900" width="984"></canvas>
+			</div>
 		</div>
-	</div>
+	</main>
 	<script type="module">
 		import GuiTab from './js/GuiTab.js';
 		import CustomEvents from './js/lib/CustomEvents.js';

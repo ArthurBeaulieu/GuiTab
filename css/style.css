@@ -3,17 +3,34 @@
 }
 
 html, body {
+	font-family: sans-serif;
 	font-size: 62.5%;
 	height: 100vh;
 	margin: 0;
 	width: 100vw;
 }
 
-body {
+nav {
+	align-items: center;
+	background-color: black;
+	display: flex;
+	height: 5rem;
+	width: 100%;
+}
+
+main {
 	align-items: center;
 	display: flex;
 	font-family: sans-serif;
 	justify-content: center;
+	height: calc(100% - 5rem);
+}
+
+h1 {
+	color: white;
+	font-size: 3rem;
+	margin: 0;
+	padding: 0 1rem;
 }
 
 :root {
@@ -44,10 +61,22 @@ div.project-options {
 
 div.project-container {
 	background-color: rgb(225, 225, 225);
-	border-radius: 5px;
 	display: none;
-	max-height: 600px;
+	height: 100%;
 	overflow-y: auto;
 	text-align: center;
-	width: 1024px;
+	width: 100%;
+}
+
+div.project-controls-container {
+	background: grey;
+	height: 100%;
+	width: 30rem;
+}
+
+div.tab-container {
+	background: white;
+	height: 100%;
+	overflow-y: auto;
+	width: calc(100% - 30rem);
 }

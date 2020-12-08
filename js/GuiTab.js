@@ -53,7 +53,7 @@ class GuiTab {
 
 	_openProject(options) {
 		this._projectOptions.style.display = 'none';
-		this._projectContainer.style.display = 'block';
+		this._projectContainer.style.display = 'flex';
 		const tabMaker = new TabMaker(options);
 	}
 

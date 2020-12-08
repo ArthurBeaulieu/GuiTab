@@ -325,7 +325,7 @@ class Shortcut {
           shiftKey: /shift/i.test(keyString)
         },
         modifierCount: this._getModifiersCount(keyString),
-        key: keyString.toLowerCase().replace('ctrl', '').replace('alt', '').replace('maj', '').replace(' ', ''),
+        key: keyString.toLowerCase().replace('ctrl', '').replace('alt', '').replace('maj', '').replace(' ', '').replace('+', ''),
         paused: false,
         fire: fire
       };
