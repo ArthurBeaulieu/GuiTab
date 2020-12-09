@@ -12,7 +12,8 @@ html, body {
 
 nav {
 	align-items: center;
-	background-color: black;
+	background-color: #161B22;
+	border-bottom: solid 1px #30363D;
 	display: flex;
 	height: 5rem;
 	width: 100%;
@@ -21,16 +22,30 @@ nav {
 main {
 	align-items: center;
 	display: flex;
-	font-family: sans-serif;
 	justify-content: center;
 	height: calc(100% - 5rem);
 }
 
-h1 {
+h1, h2, h3, p {
 	color: white;
-	font-size: 3rem;
 	margin: 0;
+}
+
+h1 {
+	font-size: 3rem;
 	padding: 0 1rem;
+}
+
+h2 {
+	font-size: 2rem;
+}
+
+h3 {
+	font-size: 1.8rem;
+}
+
+p {
+	font-size: 1.3rem;
 }
 
 :root {
@@ -49,34 +64,143 @@ div.home-container {
 
 div.project-options {
 	align-items: center;
-	background-color: red;
+	background-color: grey;
 	border-radius: 5px;
 	display: none;
 	flex-direction: column;
 	font-size: 1.2rem;
-	height: 20rem;
+	height: auto;
 	justify-content: center;
-	width: 20rem;
+	padding: 3rem;
+	width: auto;
 }
+
+div.project-options input {
+	border: solid 1px transparent;
+}
+
+div.project-options input.error {
+	border: solid 1px red;
+}
+
+/* Opened project section */
 
 div.project-container {
 	background-color: rgb(225, 225, 225);
 	display: none;
 	height: 100%;
 	overflow-y: auto;
-	text-align: center;
 	width: 100%;
 }
 
+/* Controls help */
+
 div.project-controls-container {
-	background: grey;
+	background: #0D1117;
+	border-right: solid 1px #30363D;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 	height: 100%;
 	width: 30rem;
 }
+
+div.project-controls-container h3,
+div.icons-line,
+div.info-line,
+div.controls-help p {
+	margin-bottom: 1rem;
+	padding: 0 1rem;
+}
+
+div.info-wrapper {
+	padding: 2rem 0;
+}
+
+div.project-controls-container h3 {
+	padding-left: 2rem;
+	text-align: left;
+}
+
+div.icons-line,
+div.info-line {
+	align-items: center;
+	display: flex;
+	justify-content: flex-start;
+}
+
+div.info-line {
+	align-items: flex-start;
+	flex-direction: column;
+}
+
+div.icons-line.left {
+	justify-content: flex-start;
+	margin-bottom: .4rem;
+}
+
+div.icons-line.right {
+	justify-content: flex-end;
+	margin-bottom: .4rem;
+}
+
+div.icons-line .icon {
+	border: solid 1px white;
+	border-radius: 2px;
+	color: white;
+	cursor: pointer;
+	display: flex;
+	font-size: 1.3rem;
+	height: 2rem;
+	justify-content: center;
+	margin: 0 .2rem;
+	width: 2rem;
+
+	transition: background .2s;
+}
+
+div.icons-line .icon.clicked {
+	background: rgba(255, 255, 255, .3);
+}
+
+div.icons-line .icon.no-border {
+	border: none;
+	border-radius: 0;
+	margin: 0 .2rem;
+}
+
+div.icons-line .icon.dynamics {
+	font-family: serif;
+	font-style: italic;
+}
+
+div.icons-line .icon.dynamics.right {
+	margin-left: auto;
+}
+
+div.icons-line .icon.dynamics img {
+	padding: .2rem;
+}
+
+div.icons-line p {
+	margin: 0 1rem;
+	padding: 0;
+}
+
+div.credits {
+	border-top: solid 1px white;
+	margin: 2rem;
+	margin-bottom: 0;
+	padding: 1rem;
+	text-align: center;
+}
+
+/* Tab section */
 
 div.tab-container {
 	background: white;
 	height: 100%;
 	overflow-y: auto;
+	text-align: center;
 	width: calc(100% - 30rem);
 }

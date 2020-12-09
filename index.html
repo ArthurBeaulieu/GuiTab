@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>TabMaker</title>
+	<title>GuiTab – 0.1.0</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
@@ -11,13 +11,18 @@
 	</nav>
 	<main id="page-content">
 		<div id="home-container" class="home-container">
+			<div id="existing-project"></div>
 			<button id="new-project-button">New project</button>
 		</div>
 		<div id="project-options" class="project-options">
 			<label for="project-name">Project name</label>
-			<input id="project-name" type="text" name="project-name" placeholder="My Project" value="My Project">
+			<input id="project-name" type="text" name="project-name" placeholder="My Project">
+			<label for="project-composer">Composer</label>
+			<input id="project-composer" type="text" name="project-composer" placeholder="Composer">
+			<label for="project-bpm">BPM</label>
+			<input id="project-bpm" type="number" name="project-bpm" placeholder="120">
 			<label for="project-time-signature">Time signature</label>
-			<input id="project-time-signature" type="text" name="project-time-signature" placeholder="4/4" value="4/4">
+			<input id="project-time-signature" type="text" name="project-time-signature" placeholder="4/4">
 			<label for="guitar-type">Instrument</label>
 			<select id="guitar-type" type="text" name="guitar-type">
 				<option value="guitar">Guitar</option>
@@ -27,9 +32,92 @@
 		</div>
 		<div id="project-container" class="project-container">
 			<div class="project-controls-container">
-
+				<div class="info-wrapper">
+					<h3>Tab info</h3>
+					<div class="info-line">
+						<p id="project-info-main">My Project – Composer</p>
+						<p id="project-info-aux">Guitar tab – 4/4 – 120 BPM</p>
+						<p id="cursor-position">Measure 1, Beat 1/1</p>
+					</div>
+					<div class="icons-line">
+						<div id="save-project" class="icon no-border"><img src="./img/save.svg" alt="save-project"></div>
+						<div class="icon no-border"><img src="./img/download.svg" alt="download-project"></div>
+					</div>
+					<h3>Dynamics</h3>
+					<div id="dynamic-icons" class="icons-line">
+						<div class="icon dynamics" data-value="pp">pp</div>
+						<div class="icon dynamics" data-value="p">p</div>
+						<div class="icon dynamics" data-value="mp">mp</div>
+						<div class="icon dynamics" data-value="mf">mf</div>
+						<div class="icon dynamics" data-value="f">f</div>
+						<div class="icon dynamics" data-value="ff">ff</div>
+						<div class="icon dynamics right" data-value="x"><img src="./img/delete.svg" alt="remove-dynamic"></div>
+					</div>
+					<h3>Chords</h3>
+					<div class="icons-line">
+						<input id="chord" type="text" name="chord-value" value="">
+						<div id="add-chord" class="icon dynamics" data-value="x"><img src="./img/plus.svg" alt="add-chord"></div>
+						<div id="remove-chord" class="icon dynamics right" data-value="x"><img src="./img/delete.svg" alt="remove-chord"></div>
+					</div>
+					<h3>Annotation</h3>
+					<div class="icons-line">
+						<input id="annotation" type="text" name="annotation-value" value="">
+						<div id="add-annotation" class="icon dynamics" data-value="x"><img src="./img/plus.svg" alt="add-annotation"></div>
+						<div id="remove-annotation" class="icon dynamics right" data-value="x"><img src="./img/delete.svg" alt="remove-annotation"></div>
+					</div>
+				</div>
+				<div>
+					<div class="controls-help">
+						<h3>Moving cursor</h3>
+						<div class="icons-line">
+							<div id="arrow-up" class="icon">↑</div>
+							<div id="arrow-left" class="icon">←</div>
+							<div id="arrow-down" class="icon">↓</div>
+							<div id="arrow-right" class="icon">→</div>
+							<p>or</p>
+							<div id="z-up" class="icon">z</div>
+							<div id="q-left" class="icon">q</div>
+							<div id="s-down" class="icon">s</div>
+							<div id="d-right" class="icon">d</div>
+						</div>
+						<p>Use control to move faster (left and right)</p>
+						<h3>Modifiers</h3>
+						<div class="icons-line left">
+							<div id="h-modifier" class="icon">h</div>
+							<p>Hammer-on</p>
+						</div>
+						<div class="icons-line left">
+							<div id="p-modifier" class="icon">p</div>
+							<p>Pull-off</p>
+						</div>
+						<div class="icons-line left">
+							<div id="b-modifier" class="icon">b</div>
+							<p>Bend</p>
+						</div>
+						<div class="icons-line left">
+							<div id="x-modifier" class="icon">x</div>
+							<p>Muffled</p>
+						</div>
+						<div class="icons-line left">
+							<div id="v-modifier" class="icon">v</div>
+							<p>Vibrato</p>
+						</div>
+						<div class="icons-line left">
+							<div id="/-modifier" class="icon">/</div>
+							<p>Ascending slide</p>
+						</div>
+						<div class="icons-line left">
+							<div id="\-modifier" class="icon">\</div>
+							<p>Descending slide</p>
+						</div>
+					</div>
+					<div class="credits">
+						<p>GuiTab – Version 0.1.0</p>
+						<p>Arthur Beaulieu – 2020</p>
+					</div>
+				</div>
 			</div>
-			<div class="tab-container">
+			<div id="tab-container" class="tab-container">
 				<canvas id="tab-canvas" height="900" width="984"></canvas>
 			</div>
 		</div>
