@@ -34,6 +34,8 @@ class TabMaker {
 		this._headerHeight = 200;
 		// Tab canvas utils
 		this._lineSpace = 12;
+		this._tabLineHeight = 0;
+		this._tabLineMargin = this._lineSpace * 8;
 		this._fontSize = 10;
 		this._lineLength = 0;
 		this._measureLength = 0;
@@ -72,14 +74,17 @@ class TabMaker {
 			++this._measurePerLines;
 			this._lineLength += this._measureLength;
 		}
-		// Init canvas dimension with one line
-		this._canvas.height = this._headerHeight + this._lineSpace + (this._lineSpace * 2) + ((this._lineCount - 1) * this._lineSpace);
-		this._canvas.width = this._lineLength + (3 * this._lineSpace);
 
 		if (this._type === 'Bass') {
 			this._lineCount = 4;
 			this._strings = ['G', 'D', 'A', 'E'];
 		}
+
+		this._tabLineHeight = ((this._lineCount - 1) * this._lineSpace);
+
+		// Init canvas dimension with one line
+		this._canvas.height = this._headerHeight + this._tabLineHeight + this._tabLineMargin;
+		this._canvas.width = this._lineLength + (3 * this._lineSpace);
 		// Save in local storage the new project
 		if (this._lsName === '') {
 			this._lsName = `tab-${this._name}-${this._composer}-${Date.now()}`;
@@ -87,7 +92,7 @@ class TabMaker {
 		} else {
 			// Update canvas, height according to the number of measures
 			for (let i = this._measurePerLines; i < this._measures.length; i += this._measurePerLines) {
-				this._canvas.height += this._lineSpace + (this._lineSpace * 3) + ((this._lineCount - 1) * this._lineSpace);
+				this._canvas.height += this._tabLineHeight + this._tabLineMargin;
 			}
 		}
 
@@ -122,6 +127,9 @@ class TabMaker {
 		// Annotation events
 		this._evtIds.push(Events.addEvent('click', document.getElementById('add-annotation'), this._addAnnotation, this));
 		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-annotation'), this._removeAnnotation, this));
+		// Syllabe events
+		this._evtIds.push(Events.addEvent('click', document.getElementById('add-syllabe'), this._addSyllabe, this));
+		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-syllabe'), this._removeSyllabe, this));
 		// Local keayboard event
 		this._evtIds.push(Events.addEvent('keydown', document, this._keyboardClicked, this));
 	}
@@ -131,7 +139,7 @@ class TabMaker {
 		// Init cursor position to first beat, first sub beat on lowest instrument string
 		this._cursor = {
 			x: this._lineSpace + (this._lineSpace / 2),
-			y: this._headerHeight + (this._lineCount * this._lineSpace) - (this._lineSpace / 2),
+			y: this._headerHeight + this._tabLineHeight + (this._tabLineMargin / 2) - (this._lineSpace / 2),
 			measure: 0,
 			beat: 0,
 			line: 0,
@@ -145,12 +153,19 @@ class TabMaker {
 					subBeats: this._timeSignature.beat * this._timeSignature.measure,
 					timeSignature: this._timeSignature, // As it can be modified for any measure, we store the default value
 					length: this._measureLength,
+					tempo: [],
 					notes: [],
 					dynamics: [],
 					chords: [],
-					annotations: []
+					annotations: [],
+					syllabes: []
 				});
 			}
+
+			this._measures[0].tempo.push({
+				beat: 0,
+				value: this._bpm
+			});
 		}
 
 		this._refreshTab();
@@ -188,10 +203,6 @@ class TabMaker {
 		this._ctx.fillText(this._name, this._canvas.width / 2, (this._headerHeight / 2) - (this._fontSize * 1.5));
 		this._ctx.font = `bold ${this._fontSize * 2}px sans-serif`;
 		this._ctx.fillText(this._composer, this._canvas.width / 2, (this._headerHeight / 2) + (this._fontSize * 2));
-		// BPM indication
-		this._quarterNote(this._lineSpace * 2, this._headerHeight - (this._lineSpace * 2), 3, 18);
-		this._ctx.font = `${this._fontSize}px sans-serif`;
-		this._ctx.fillText(`= ${this._bpm}`, (this._lineSpace * 4) - 3, this._headerHeight - (this._lineSpace * 2));
 		// Draw instrument type
 		this._ctx.textAlign = 'right';
 		this._ctx.font = `${this._fontSize * 1.5}px sans-serif`;
@@ -221,7 +232,7 @@ class TabMaker {
 
 
 	_drawMeasure(measure, measureNumber, lineNumber) {
-		const yOffset = this._headerHeight + this._lineSpace + (lineNumber * (this._lineSpace * 4)) + (lineNumber * ((this._lineCount - 1) * this._lineSpace));
+		const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
 		this._ctx.strokeStyle = this._colors.subBar;
 		for (let i = 0; i < measure.subBeats; i += measure.timeSignature.measure) {
 			// Draw sub beat horizontal line
@@ -240,6 +251,22 @@ class TabMaker {
 		this._ctx.stroke();
 		this._ctx.lineWidth = 1;
 		this._ctx.closePath();
+		// Draw tempo indication
+		for (let i = 0; i < measure.tempo.length; ++i) {
+			// BPM indication
+			this._quarterNote(
+				(this._lineSpace * 2) + (measure.tempo[i].beat * this._lineSpace) + (measureNumber * measure.length),
+				yOffset - (this._tabLineMargin / 2) + (18 / 2),
+				3,
+				18
+			);
+			this._ctx.font = `${this._fontSize}px sans-serif`;
+			this._ctx.fillText(
+				`= ${measure.tempo[i].value}`,
+				(this._lineSpace * 2) + (measure.tempo[i].beat * this._lineSpace) + (measureNumber * measure.length) + (3 * 2),
+				yOffset - (this._tabLineMargin / 2) + (18 / 2)
+			);
+		}
 		// Draw measure notes if any
 		if (measure.notes.length > 0) {
 			for (let i = 0; i < measure.notes.length; ++i) {
@@ -297,12 +324,24 @@ class TabMaker {
 			}
 			this._ctx.font = `bold ${this._fontSize}px sans-serif`;
 		}
+		// Draw annotations if any
+		if (measure.syllabes.length > 0) {
+			this._ctx.font = `italic ${this._fontSize * 1.2}px sans-serif`;
+			for (let i = 0; i < measure.syllabes.length; ++i) {
+				this._ctx.fillText(
+					measure.syllabes[i].value,
+					(this._lineSpace * 2) + (measure.syllabes[i].beat * this._lineSpace) + (measureNumber * measure.length),
+					yOffset + (3 * this._tabLineMargin / 4)
+				);
+			}
+			this._ctx.font = `bold ${this._fontSize}px sans-serif`;
+		}
 	}
 
 
 	_drawTabLine(lineNumber) {
 		// The y offset depends on the line number, spaced in top/bottom with 3 lines space
-		const yOffset = this._headerHeight + this._lineSpace + (lineNumber * (this._lineSpace * 4)) + (lineNumber * ((this._lineCount - 1) * this._lineSpace));
+		const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
 
 		this._ctx.beginPath();
 		this._ctx.fillStyle = this._colors.text;
@@ -383,7 +422,13 @@ class TabMaker {
 
 	// Keyboard utils
 
+
 	_keyboardClicked(event) {
+		const inputActive = [document.getElementById('chord'), document.getElementById('annotation'), document.getElementById('syllabe')];
+		if (inputActive.indexOf(document.activeElement) !== -1) {
+			return;
+		}
+
 		if (!isNaN(parseInt(event.key)) && typeof parseInt(event.key) === 'number') {
 			if (this._keyEventTimeoutId !== null) {
 				this._keyValue += event.key;
@@ -434,12 +479,12 @@ class TabMaker {
 			--this._cursor.measure;
 			this._cursor.beat = (this._timeSignature.beat * this._timeSignature.measure) - 1;
 			--this._cursor.line;
-			// Move cursor on the next line
-			const yOffset = (this._lineSpace * 3) + ((this._lineCount - 1) * this._lineSpace);
+			// Move cursor on the previous line
 			this._cursor.x = this._lineLength + this._lineSpace - (this._lineSpace / 2);
-			this._cursor.y = this._cursor.y - yOffset;
+			this._cursor.y -= this._tabLineHeight + this._tabLineMargin;
 		}
-
+		// Update container scroll according to cursor position
+		document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
 		this._refreshTab();
 	}
 
@@ -462,18 +507,21 @@ class TabMaker {
 			if (this._cursor.beat === 0 || ctrlModifier > 1) {
 				++this._cursor.measure;
 			}
+			// Update container scroll according to cursor position
+			document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
 		} else { // New line for cursor
 			++this._cursor.measure;
 			this._cursor.beat = 0;
 			++this._cursor.line;
 			// Move cursor on the next line
-			const yOffset = (this._lineSpace * 4) + ((this._lineCount - 1) * this._lineSpace);
 			this._cursor.x = this._lineSpace + (this._lineSpace / 2);
-			this._cursor.y = this._cursor.y + yOffset;
+			this._cursor.y += this._tabLineHeight + this._tabLineMargin;
+			// Update container scroll according to cursor position
+			document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
 			// Determine wether we should add the measures to fill new line
 			if (this._measures.length <= (this._measurePerLines * this._cursor.line)) {
 				// Resize canvas height to fit new line
-				this._canvas.height += this._lineSpace + (this._lineSpace * 3) + ((this._lineCount - 1) * this._lineSpace);
+				this._canvas.height += this._tabLineHeight + this._tabLineMargin;
 				// Scroll to canvas bottom
 				document.getElementById('tab-container').scrollTo(0, document.getElementById('tab-container').scrollHeight);
 				// Append measures for new line
@@ -483,10 +531,12 @@ class TabMaker {
 						subBeats: this._timeSignature.beat * this._timeSignature.measure,
 						timeSignature: this._timeSignature, // As it can be modified for any measure, we store the default value
 						length: this._measureLength,
+						tempo: [],
 						notes: [],
 						dynamics: [],
 						chords: [],
-						annotations: []
+						annotations: [],
+						syllabes: []
 					});
 				}
 			}
@@ -499,7 +549,7 @@ class TabMaker {
 	_moveCursorUp() {
 		this._toggleClickedClass('arrow-up');
 		this._toggleClickedClass('z-up');
-		const yOffset = this._cursor.line * ((this._lineSpace * 3) + ((this._lineCount - 1) * this._lineSpace)) + this._headerHeight;
+		const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (this._cursor.line * (this._tabLineHeight + this._tabLineMargin)) - this._lineSpace;
 		if (this._cursor.y - this._lineSpace > yOffset) {
 			this._cursor.y -= this._lineSpace;
 			--this._cursor.string;
@@ -512,8 +562,8 @@ class TabMaker {
 	_moveCursorDown() {
 		this._toggleClickedClass('arrow-down');
 		this._toggleClickedClass('s-down');
-		const yOffset = this._cursor.line * ((this._lineSpace * 3) + ((this._lineCount - 1) * this._lineSpace)) + this._headerHeight;
-		if (this._cursor.y + this._lineSpace < this._lineCount * this._lineSpace + yOffset) {
+		const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (this._cursor.line * (this._tabLineHeight + this._tabLineMargin)) + (this._lineCount - 1) * this._lineSpace;
+		if (this._cursor.y + this._lineSpace < yOffset) {
 			this._cursor.y += this._lineSpace;
 			++this._cursor.string;
 		}
@@ -545,6 +595,14 @@ class TabMaker {
 			const savedAnnotation = this._measures[this._cursor.measure].annotations[i];
 			if (savedAnnotation.beat === this._cursor.beat) {
 				document.getElementById('annotation').value = savedAnnotation.value;
+			}
+		}
+		// Update UI feedback for existing annotation on current beat
+		document.getElementById('syllabe').value = '';
+		for (let i = 0; i < this._measures[this._cursor.measure].syllabes.length; ++i) {
+			const savedSyllabe = this._measures[this._cursor.measure].syllabes[i];
+			if (savedSyllabe.beat === this._cursor.beat) {
+				document.getElementById('syllabe').value = savedSyllabe.value;
 			}
 		}
 	}
@@ -676,6 +734,47 @@ class TabMaker {
 	}
 
 
+	_addSyllabe() {
+		const syllabeValue = document.getElementById('syllabe').value;
+		if (syllabeValue !== '') {
+			const syllabe = {
+				beat: this._cursor.beat,
+				value: syllabeValue
+			};
+
+			let exists = false;
+			let existingIndex = -1;
+			for (let i = 0; i < this._measures[this._cursor.measure].syllabes.length; ++i) {
+				const savedSyllabe = this._measures[this._cursor.measure].syllabes[i];
+				if (JSON.stringify(savedSyllabe) === JSON.stringify(syllabe)) { // Note already saved
+					exists = true;
+				} else if (savedSyllabe.value !== syllabe.value && savedSyllabe.beat === syllabe.beat) {
+					existingIndex = i;
+				}
+			}
+
+			if (existingIndex !== -1) { // Replace existing note if already exists
+				this._measures[this._cursor.measure].syllabes[existingIndex] = syllabe;
+			} else if (!exists) { // Create note if no matching note were found in measure
+				this._measures[this._cursor.measure].syllabes.push(syllabe);
+			}
+
+			this._refreshTab();
+		}
+	}
+
+
+	_removeSyllabe() {
+		for (let i = 0; i < this._measures[this._cursor.measure].syllabes.length; ++i) {
+			if (this._measures[this._cursor.measure].syllabes[i].beat === this._cursor.beat) {
+				this._measures[this._cursor.measure].syllabes.splice(i, 1);
+				this._refreshTab();
+				break;
+			}
+		}
+	}
+
+
 	_toggleClickedClass(id) {
 		document.getElementById(id).classList.add('clicked');
 		setTimeout(() => {
@@ -687,12 +786,8 @@ class TabMaker {
 	// Canvas utils
 
 
-	_roundRect(x, y, width, height, radius, fill, stroke) {
+	_roundRect(x, y, width, height, radius) {
 		// MVP -> https://stackoverflow.com/a/3368118
-	  if (typeof stroke === 'undefined') {
-	    stroke = true;
-	  }
-
 	  if (typeof radius === 'undefined') {
 	    radius = 5;
 	  }
@@ -700,8 +795,8 @@ class TabMaker {
 	  if (typeof radius === 'number') {
 	    radius = { tl: radius, tr: radius, br: radius, bl: radius };
 	  } else {
-	    var defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 };
-	    for (var side in defaultRadius) {
+	    const defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 };
+	    for (let side in defaultRadius) {
 	      radius[side] = radius[side] || defaultRadius[side];
 	    }
 	  }

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>GuiTab – 0.1.0</title>
+	<title>GuiTab – 0.1.1</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
@@ -33,16 +33,19 @@
 		<div id="project-container" class="project-container">
 			<div class="project-controls-container">
 				<div class="info-wrapper">
-					<h3>Tab info</h3>
-					<div class="info-line">
-						<p id="project-info-main">My Project – Composer</p>
-						<p id="project-info-aux">Guitar tab – 4/4 – 120 BPM</p>
-						<p id="cursor-position">Measure 1, Beat 1/1</p>
+					<div class="main-info">
+						<h3>Tab info</h3>
+						<div class="info-line">
+							<p id="project-info-main">My Project – Composer</p>
+							<p id="project-info-aux">Guitar tab – 4/4 – 120 BPM</p>
+							<p id="cursor-position">Measure 1, Beat 1/1</p>
+						</div>
+						<div class="icons-line">
+							<div id="save-project" class="icon no-border"><img src="./img/save.svg" alt="save-project"></div>
+							<div class="icon no-border"><img src="./img/download.svg" alt="download-project"></div>
+						</div>
 					</div>
-					<div class="icons-line">
-						<div id="save-project" class="icon no-border"><img src="./img/save.svg" alt="save-project"></div>
-						<div class="icon no-border"><img src="./img/download.svg" alt="download-project"></div>
-					</div>
+					<p>The following fields are relative to the cursor</p>
 					<h3>Dynamics</h3>
 					<div id="dynamic-icons" class="icons-line">
 						<div class="icon dynamics" data-value="pp">pp</div>
@@ -64,6 +67,12 @@
 						<input id="annotation" type="text" name="annotation-value" value="">
 						<div id="add-annotation" class="icon dynamics" data-value="x"><img src="./img/plus.svg" alt="add-annotation"></div>
 						<div id="remove-annotation" class="icon dynamics right" data-value="x"><img src="./img/delete.svg" alt="remove-annotation"></div>
+					</div>
+					<h3>Lyric syllabe</h3>
+					<div class="icons-line">
+						<input id="syllabe" type="text" name="syllabe-value" value="">
+						<div id="add-syllabe" class="icon dynamics" data-value="x"><img src="./img/plus.svg" alt="add-syllabe"></div>
+						<div id="remove-syllabe" class="icon dynamics right" data-value="x"><img src="./img/delete.svg" alt="remove-syllabe"></div>
 					</div>
 				</div>
 				<div>
@@ -112,7 +121,7 @@
 						</div>
 					</div>
 					<div class="credits">
-						<p>GuiTab – Version 0.1.0</p>
+						<p>GuiTab – Version 0.1.1</p>
 						<p>Arthur Beaulieu – 2020</p>
 					</div>
 				</div>
