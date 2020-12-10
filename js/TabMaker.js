@@ -64,6 +64,20 @@ class TabMaker {
 	}
 
 
+	destroy() {
+		// Remove all shortcuts
+		Shortcut.removeAll();
+		// Remove all standard events
+		for (let i = 0; i < this._evtIds.length; ++i) {
+			Events.addEvent(this._evtIds[i]);
+		}
+		// Remove all class keys
+		Object.keys(this).forEach(key => {
+      delete this[key];
+    });
+	}
+
+
 	_init() {
 		// Update UI with project info
 		document.getElementById('project-info-main').innerHTML = `${this._name} – ${this._composer}`;

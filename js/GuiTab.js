@@ -8,7 +8,12 @@ class GuiTab {
 		this._homeContainer = null;
 		this._projectOptions = null;
 		this._projectContainer = null;
+
 		this._newProjectButton = null;
+		this._homeButton = null;
+		this._aboutButton = null;
+
+		this._tab = null;
 
 		this._init();
 	}
@@ -20,9 +25,13 @@ class GuiTab {
 		this._projectContainer = document.getElementById('project-container');
 
 		this._newProjectButton = document.getElementById('new-project-button');
+		this._homeButton = document.getElementById('home-button');
+		this._aboutButton = document.getElementById('about-button');
 
 		this._fillExistingProjects();
 		Events.addEvent('click', this._newProjectButton, this._createNewProject, this);
+		Events.addEvent('click', this._homeButton, this._homePage, this);
+		Events.addEvent('click', this._aboutButton, this._aboutModal, this);
 	}
 
 
@@ -122,10 +131,35 @@ class GuiTab {
 	}
 
 
+	_homePage() {
+		if (this._tab !== null) {
+			this._tab.destroy();
+			this._tab = null;
+		}
+
+		this._homeContainer.style.display = 'flex';
+		this._projectOptions.style.display = 'none';
+		this._projectContainer.style.display = 'none';
+	}
+
+
+	_aboutModal() {
+		const close = event => {
+			if (event.target === document.getElementById('modal-overlay')) {
+				document.getElementById('modal-overlay').style.display = 'none';
+				Events.removeEvent(evtId);
+			}
+		};
+
+		document.getElementById('modal-overlay').style.display = 'flex';
+		const evtId = Events.addEvent('click', document.getElementById('modal-overlay'), close);
+	}
+
+
 	_openProject(options) {
 		this._projectOptions.style.display = 'none';
 		this._projectContainer.style.display = 'flex';
-		const tabMaker = new TabMaker(options);
+		this._tab = new TabMaker(options);
 	}
 
 

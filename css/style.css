@@ -19,6 +19,26 @@ nav {
 	width: 100%;
 }
 
+nav img {
+	cursor: pointer;
+	height: 50%;
+	padding: 0 2rem;
+}
+
+nav img:last-of-type {
+	margin-left: auto;
+}
+
+nav a {
+	height: 50%;
+	padding-right: 2rem;
+	width: auto;
+}
+
+nav a svg {
+	height: 100%;
+}
+
 main {
 	align-items: center;
 	display: flex;
@@ -44,12 +64,12 @@ h3 {
 	font-size: 1.8rem;
 }
 
-p {
+p, a {
 	font-size: 1.3rem;
 }
 
-:root {
-
+nav h1 {
+	padding: 0;
 }
 
 div.home-container {
@@ -227,4 +247,28 @@ div.tab-container {
 	overflow-y: auto;
 	text-align: center;
 	width: calc(100% - 30rem);
+}
+
+/* Modal */
+
+.modal-overlay {
+	align-items: center;
+	background: rgba(0, 0, 0, .8);
+	bottom: 0;
+	display: none;
+	justify-content: center;
+	left: 0;
+	position: fixed;
+	right: 0;
+	top: 0;
+}
+
+.modal {
+	background: #0D1117;
+	border: solid 1px #30363D;
+	border-radius: 5px;
+	max-width: 50rem;
+	padding: 2rem;
+	text-align: center;
+	width: auto;
 }
