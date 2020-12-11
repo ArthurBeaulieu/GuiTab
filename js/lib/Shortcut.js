@@ -1,6 +1,3 @@
-'use strict';
-
-
 class Shortcut {
 
 
@@ -18,7 +15,7 @@ class Shortcut {
    * @returns {object} - The Shortcut singleton instance */
   constructor(options = {}) {
     // If an instance of Shortcut already exists, we just return it
-    if (!!Shortcut.instance) {
+    if (Shortcut.instance) {
       return Shortcut.instance;
     }
     // Set object instance
@@ -40,7 +37,7 @@ class Shortcut {
      * @member {boolean} - The auto repeat of an event when key is held on push */
     this._autoRepeat = options.autoRepeat;
     /** @private
-     * @member {boolean} - The auto repeat of an event when key is held on push */
+     * @member {boolean} - Do not call prevent default on key event flag */
     this._noPrevention = options.noPrevention;
     /** @private
      * @member {object[]} - Single key saved shortcuts */
@@ -50,7 +47,7 @@ class Shortcut {
     this._multiKey = [];
     /** @public
      * @member {string} - Component version */
-    this.version = '1.0.0';
+    this.version = '1.0.2';
     // Save singleton scope for testShortcuts method to be able to properly remove event on demand
     this._testShortcuts = this._testShortcuts.bind(this);
     // Retun singleton to the caller

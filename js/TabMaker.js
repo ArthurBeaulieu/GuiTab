@@ -1,3 +1,6 @@
+import TabPlayback from './TabPlayback.js';
+
+
 class TabMaker {
 
 
@@ -54,6 +57,8 @@ class TabMaker {
 			bar: '#888888',
 			subBar: '#BBBBBB'
 		};
+
+		this._playback = new TabPlayback();
 
 		this._evtIds = [];
 
