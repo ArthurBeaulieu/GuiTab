@@ -191,6 +191,7 @@ class TabMaker {
 			});
 		}
 
+		this._playback.startPlayback(this._measures, this._cursor);
 		this._ctx.imageSmoothingEnabled = true;
 		this._refreshTab();
 	}

@@ -5,6 +5,8 @@ class TabPlayback {
     this._masterGainNode = null;
     this._oscillatorNode = null;
     this._noteFreq = [];
+    this._playbackTimeoutId = -1;
+
     try {
       this._audioContext = new (window.AudioContext || window.webkitAudioContext)();
     } catch (error) {
@@ -40,8 +42,6 @@ class TabPlayback {
       this._noteFreq[i + 4]['A'] = 440 * Math.pow(2, i);
       buildOctave(this._noteFreq[i + 4], this._noteFreq[i + 4]['A']);
     }
-
-    this._playNote(this._noteFreq[4]['A']);
   }
 
 
@@ -60,8 +60,28 @@ class TabPlayback {
     this._oscillatorNode.frequency.value = frequency;
     this._oscillatorNode.start();
     setTimeout(() => {
-      osc.stop();
-    }, 100); // TODO : time to be determined from bpm value
+      this._oscillatorNode.stop();
+    }, 200); // TODO : time to be determined from bpm value
+  }
+
+
+  startPlayback(measures, cursor) {
+    //    this._playNote(this._noteFreq[4]['A']);
+    console.log(measures[cursor.measure].tempo);
+  }
+
+
+  playNote() {
+    this._playNote(440);
+    this._playbackTimeoutId = setTimeout(() => {
+      this.playNote();
+    }, 200);
+  }
+
+
+  stopPlayback() {
+    clearTimeout(this._playbackTimeoutId);
+    this._playbackTimeoutId = -1;
   }
 
 
