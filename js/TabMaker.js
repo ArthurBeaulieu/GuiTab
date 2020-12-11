@@ -57,8 +57,6 @@ class TabMaker {
 
 		this._evtIds = [];
 
-		//1.41428571429
-
 		this._init();
 		this._events();
 	}
@@ -115,8 +113,10 @@ class TabMaker {
 
 
 	_events() {
-		// Save/Download events
+		// Save/Download/Export events
 		this._evtIds.push(Events.addEvent('click', document.getElementById('save-project'), this._refreshTab, this));
+		this._evtIds.push(Events.addEvent('click', document.getElementById('download-project'), this._downloadAsPDF, this));
+		this._evtIds.push(Events.addEvent('click', document.getElementById('export-project'), this._exportProject, this));
 		// Cursor movement
 		Shortcut.register('ArrowLeft', this._moveCursorLeft.bind(this));
 		Shortcut.register('Ctrl+ArrowLeft', this._moveCursorLeft.bind(this, true));
@@ -138,12 +138,15 @@ class TabMaker {
 		// Chord events
 		this._evtIds.push(Events.addEvent('click', document.getElementById('add-chord'), this._addChord, this));
 		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-chord'), this._removeChord, this));
-		// Annotation events
-		this._evtIds.push(Events.addEvent('click', document.getElementById('add-annotation'), this._addAnnotation, this));
-		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-annotation'), this._removeAnnotation, this));
+		// Section events
+		this._evtIds.push(Events.addEvent('click', document.getElementById('add-section'), this._addSection, this));
+		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-section'), this._removeSection, this));
 		// Syllabe events
 		this._evtIds.push(Events.addEvent('click', document.getElementById('add-syllabe'), this._addSyllabe, this));
 		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-syllabe'), this._removeSyllabe, this));
+		// Tempo events
+		this._evtIds.push(Events.addEvent('click', document.getElementById('add-tempo'), this._addTempo, this));
+		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-tempo'), this._removeTempo, this));
 		// Local keayboard event
 		this._evtIds.push(Events.addEvent('keydown', document, this._keyboardClicked, this));
 	}
@@ -171,17 +174,19 @@ class TabMaker {
 					notes: [],
 					dynamics: [],
 					chords: [],
-					annotations: [],
+					sections: [],
 					syllabes: []
 				});
 			}
 
 			this._measures[0].tempo.push({
+				master: true,
 				beat: 0,
 				value: this._bpm
 			});
 		}
 
+		this._ctx.imageSmoothingEnabled = true;
 		this._refreshTab();
 	}
 
@@ -192,6 +197,7 @@ class TabMaker {
 		this._drawHeader();
 		this._drawTabMeasures();
 		this._drawCursor();
+		this._updateSectionList();
 		this._ctx.translate(-0.5, -0.5); // AA restore
 		// Update local storae value each redraw to store any new data
 		window.localStorage.setItem(this._lsName, JSON.stringify({
@@ -326,26 +332,26 @@ class TabMaker {
 			}
 			this._ctx.font = `bold ${this._fontSize}px sans-serif`;
 		}
-		// Draw annotations if any
-		if (measure.annotations.length > 0) {
+		// Draw sections if any
+		if (measure.sections.length > 0) {
 			this._ctx.font = `bold ${this._fontSize * 1.6}px sans-serif`;
-			for (let i = 0; i < measure.annotations.length; ++i) {
+			for (let i = 0; i < measure.sections.length; ++i) {
 				this._ctx.fillText(
-					measure.annotations[i].value,
-					(this._lineSpace * 2) + (measure.annotations[i].beat * this._lineSpace) + (measureNumber * measure.length),
+					measure.sections[i].value,
+					(this._lineSpace * 2) + (measure.sections[i].beat * this._lineSpace) + (measureNumber * measure.length),
 					yOffset - ((5 * this._lineSpace) / 3)
 				);
 			}
 			this._ctx.font = `bold ${this._fontSize}px sans-serif`;
 		}
-		// Draw annotations if any
+		// Draw syllabes if any
 		if (measure.syllabes.length > 0) {
-			this._ctx.font = `italic ${this._fontSize * 1.2}px sans-serif`;
+			this._ctx.font = `italic ${this._fontSize}px sans-serif`;
 			for (let i = 0; i < measure.syllabes.length; ++i) {
 				this._ctx.fillText(
 					measure.syllabes[i].value,
 					(this._lineSpace * 2) + (measure.syllabes[i].beat * this._lineSpace) + (measureNumber * measure.length),
-					yOffset + (3 * this._tabLineMargin / 4)
+					yOffset + ((this._lineCount - 1) * this._lineSpace) + (this._tabLineMargin / 3)
 				);
 			}
 			this._ctx.font = `bold ${this._fontSize}px sans-serif`;
@@ -437,33 +443,46 @@ class TabMaker {
 	// Keyboard utils
 
 
-	_keyboardClicked(event) {
-		const inputActive = [document.getElementById('chord'), document.getElementById('annotation'), document.getElementById('syllabe')];
+	_isInputFocused() {
+		const inputActive = [
+			document.getElementById('chord'),
+			document.getElementById('section'),
+			document.getElementById('syllabe'),
+			document.getElementById('tempo')
+		];
+
 		if (inputActive.indexOf(document.activeElement) !== -1) {
-			return;
+			return true;
 		}
 
-		if (!isNaN(parseInt(event.key)) && typeof parseInt(event.key) === 'number') {
-			if (this._keyEventTimeoutId !== null) {
-				this._keyValue += event.key;
-			} else {
-				this._keyValue = event.key;
+		return false;
+	}
 
-				this._keyEventTimeoutId = setTimeout(() => {
-					clearTimeout(this._keyEventTimeoutId);
-					this._keyEventTimeoutId = null;
-					if (parseInt(this._keyValue) <= 24) {
-						this._updateNote(parseInt(this._keyValue));
-					}
-					// Restore key value for next stroke
-					this._keyValue = '';
-				}, 200);
+
+	_keyboardClicked(event) {
+		if (!this._isInputFocused()) {
+			if (!isNaN(parseInt(event.key)) && typeof parseInt(event.key) === 'number') {
+				if (this._keyEventTimeoutId !== null) {
+					this._keyValue += event.key;
+				} else {
+					this._keyValue = event.key;
+
+					this._keyEventTimeoutId = setTimeout(() => {
+						clearTimeout(this._keyEventTimeoutId);
+						this._keyEventTimeoutId = null;
+						if (parseInt(this._keyValue) <= 24) {
+							this._updateNote(parseInt(this._keyValue));
+						}
+						// Restore key value for next stroke
+						this._keyValue = '';
+					}, 200);
+				}
+			} else if (this._symbols.indexOf(event.key) !== -1) {
+				event.preventDefault();
+				this._updateSymbol(event.key);
+			} else if (event.key === 'Delete') {
+				this._removeNote();
 			}
-		} else if (this._symbols.indexOf(event.key) !== -1) {
-			event.preventDefault();
-			this._updateSymbol(event.key);
-		} else if (event.key === 'Delete') {
-			this._removeNote();
 		}
 	}
 
@@ -472,117 +491,125 @@ class TabMaker {
 
 
 	_moveCursorLeft(withCtrl) {
-		this._toggleClickedClass('arrow-left');
-		this._toggleClickedClass('q-left');
-		let ctrlModifier = 1;
-		if (withCtrl === true) {
-			ctrlModifier = (this._timeSignature.beat * this._timeSignature.measure);
-		}
+		if (!this._isInputFocused()) {
+			this._toggleClickedClass('arrow-left');
+			this._toggleClickedClass('q-left');
+			let ctrlModifier = 1;
+			if (withCtrl === true) {
+				ctrlModifier = (this._timeSignature.beat * this._timeSignature.measure);
+			}
 
-		if (this._cursor.x - this._lineSpace - (this._lineSpace * ctrlModifier) > 0) {
-			this._cursor.x -= (this._lineSpace * ctrlModifier);
-			// First decrement the measure count
-			if (this._cursor.beat === 0 || ctrlModifier > 1) {
+			if (this._cursor.x - this._lineSpace - (this._lineSpace * ctrlModifier) > 0) {
+				this._cursor.x -= (this._lineSpace * ctrlModifier);
+				// First decrement the measure count
+				if (this._cursor.beat === 0 || ctrlModifier > 1) {
+					--this._cursor.measure;
+				}
+				// Then update the beat number
+				if (ctrlModifier === 1) {
+					this._cursor.beat = (this._cursor.beat - ctrlModifier + (this._timeSignature.beat * this._timeSignature.measure)) % (this._timeSignature.beat * this._timeSignature.measure);
+				}
+			} else if (this._cursor.line !== 0) { // New line for cursor
 				--this._cursor.measure;
+				this._cursor.beat = (this._timeSignature.beat * this._timeSignature.measure) - 1;
+				--this._cursor.line;
+				// Move cursor on the previous line
+				this._cursor.x = this._lineLength + this._lineSpace - (this._lineSpace / 2);
+				this._cursor.y -= this._tabLineHeight + this._tabLineMargin;
 			}
-			// Then update the beat number
-			if (ctrlModifier === 1) {
-				this._cursor.beat = (this._cursor.beat - ctrlModifier + (this._timeSignature.beat * this._timeSignature.measure)) % (this._timeSignature.beat * this._timeSignature.measure);
-			}
-		} else if (this._cursor.line !== 0) { // New line for cursor
-			--this._cursor.measure;
-			this._cursor.beat = (this._timeSignature.beat * this._timeSignature.measure) - 1;
-			--this._cursor.line;
-			// Move cursor on the previous line
-			this._cursor.x = this._lineLength + this._lineSpace - (this._lineSpace / 2);
-			this._cursor.y -= this._tabLineHeight + this._tabLineMargin;
+			// Update container scroll according to cursor position
+			document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
+			this._refreshTab();
 		}
-		// Update container scroll according to cursor position
-		document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
-		this._refreshTab();
 	}
 
 
 	_moveCursorRight(withCtrl) {
-		this._toggleClickedClass('arrow-right');
-		this._toggleClickedClass('d-right');
-		let ctrlModifier = 1;
-		if (withCtrl === true) {
-			ctrlModifier = (this._timeSignature.beat * this._timeSignature.measure);
-		}
-
-		if (this._cursor.x + (this._lineSpace * ctrlModifier) < (this._lineLength + (this._lineSpace / 2))) {
-			this._cursor.x += this._lineSpace * ctrlModifier;
-
-			if (ctrlModifier === 1) {
-				this._cursor.beat = (this._cursor.beat + ctrlModifier) % (this._timeSignature.beat * this._timeSignature.measure);
+		if (!this._isInputFocused()) {
+			this._toggleClickedClass('arrow-right');
+			this._toggleClickedClass('d-right');
+			let ctrlModifier = 1;
+			if (withCtrl === true) {
+				ctrlModifier = (this._timeSignature.beat * this._timeSignature.measure);
 			}
 
-			if (this._cursor.beat === 0 || ctrlModifier > 1) {
+			if (this._cursor.x + (this._lineSpace * ctrlModifier) < (this._lineLength + (this._lineSpace / 2))) {
+				this._cursor.x += this._lineSpace * ctrlModifier;
+
+				if (ctrlModifier === 1) {
+					this._cursor.beat = (this._cursor.beat + ctrlModifier) % (this._timeSignature.beat * this._timeSignature.measure);
+				}
+
+				if (this._cursor.beat === 0 || ctrlModifier > 1) {
+					++this._cursor.measure;
+				}
+				// Update container scroll according to cursor position
+				document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
+			} else { // New line for cursor
 				++this._cursor.measure;
-			}
-			// Update container scroll according to cursor position
-			document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
-		} else { // New line for cursor
-			++this._cursor.measure;
-			this._cursor.beat = 0;
-			++this._cursor.line;
-			// Move cursor on the next line
-			this._cursor.x = this._lineSpace + (this._lineSpace / 2);
-			this._cursor.y += this._tabLineHeight + this._tabLineMargin;
-			// Update container scroll according to cursor position
-			document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
-			// Determine wether we should add the measures to fill new line
-			if (this._measures.length <= (this._measurePerLines * this._cursor.line)) {
-				// Resize canvas height to fit new line
-				this._canvas.height += this._tabLineHeight + this._tabLineMargin;
-				// Scroll to canvas bottom
-				document.getElementById('tab-container').scrollTo(0, document.getElementById('tab-container').scrollHeight);
-				// Append measures for new line
-				for (let i = 0; i < this._measurePerLines; ++i) {
-					// Then create the first measure, its index refer to its position
-					this._measures.push({
-						subBeats: this._timeSignature.beat * this._timeSignature.measure,
-						timeSignature: this._timeSignature, // As it can be modified for any measure, we store the default value
-						length: this._measureLength,
-						tempo: [],
-						notes: [],
-						dynamics: [],
-						chords: [],
-						annotations: [],
-						syllabes: []
-					});
+				this._cursor.beat = 0;
+				++this._cursor.line;
+				// Move cursor on the next line
+				this._cursor.x = this._lineSpace + (this._lineSpace / 2);
+				this._cursor.y += this._tabLineHeight + this._tabLineMargin;
+				// Update container scroll according to cursor position
+				document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
+				// Determine wether we should add the measures to fill new line
+				if (this._measures.length <= (this._measurePerLines * this._cursor.line)) {
+					// Resize canvas height to fit new line
+					this._canvas.height += this._tabLineHeight + this._tabLineMargin;
+					// Scroll to canvas bottom
+					document.getElementById('tab-container').scrollTo(0, document.getElementById('tab-container').scrollHeight);
+					// Append measures for new line
+					for (let i = 0; i < this._measurePerLines; ++i) {
+						// Then create the first measure, its index refer to its position
+						this._measures.push({
+							subBeats: this._timeSignature.beat * this._timeSignature.measure,
+							timeSignature: this._timeSignature, // As it can be modified for any measure, we store the default value
+							length: this._measureLength,
+							tempo: [],
+							notes: [],
+							dynamics: [],
+							chords: [],
+							sections: [],
+							syllabes: []
+						});
+					}
 				}
 			}
-		}
 
-		this._refreshTab();
+			this._refreshTab();
+		}
 	}
 
 
 	_moveCursorUp() {
-		this._toggleClickedClass('arrow-up');
-		this._toggleClickedClass('z-up');
-		const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (this._cursor.line * (this._tabLineHeight + this._tabLineMargin)) - this._lineSpace;
-		if (this._cursor.y - this._lineSpace > yOffset) {
-			this._cursor.y -= this._lineSpace;
-			--this._cursor.string;
-		}
+		if (!this._isInputFocused()) {
+			this._toggleClickedClass('arrow-up');
+			this._toggleClickedClass('z-up');
+			const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (this._cursor.line * (this._tabLineHeight + this._tabLineMargin)) - this._lineSpace;
+			if (this._cursor.y - this._lineSpace > yOffset) {
+				this._cursor.y -= this._lineSpace;
+				--this._cursor.string;
+			}
 
-		this._refreshTab();
+			this._refreshTab();
+		}
 	}
 
 
 	_moveCursorDown() {
-		this._toggleClickedClass('arrow-down');
-		this._toggleClickedClass('s-down');
-		const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (this._cursor.line * (this._tabLineHeight + this._tabLineMargin)) + (this._lineCount - 1) * this._lineSpace;
-		if (this._cursor.y + this._lineSpace < yOffset) {
-			this._cursor.y += this._lineSpace;
-			++this._cursor.string;
-		}
+		if (!this._isInputFocused()) {
+			this._toggleClickedClass('arrow-down');
+			this._toggleClickedClass('s-down');
+			const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (this._cursor.line * (this._tabLineHeight + this._tabLineMargin)) + (this._lineCount - 1) * this._lineSpace;
+			if (this._cursor.y + this._lineSpace < yOffset) {
+				this._cursor.y += this._lineSpace;
+				++this._cursor.string;
+			}
 
-		this._refreshTab();
+			this._refreshTab();
+		}
 	}
 
 
@@ -603,20 +630,28 @@ class TabMaker {
 				document.getElementById('chord').value = savedChord.value;
 			}
 		}
-		// Update UI feedback for existing annotation on current beat
-		document.getElementById('annotation').value = '';
-		for (let i = 0; i < this._measures[this._cursor.measure].annotations.length; ++i) {
-			const savedAnnotation = this._measures[this._cursor.measure].annotations[i];
-			if (savedAnnotation.beat === this._cursor.beat) {
-				document.getElementById('annotation').value = savedAnnotation.value;
+		// Update UI feedback for existing section on current beat
+		document.getElementById('section').value = '';
+		for (let i = 0; i < this._measures[this._cursor.measure].sections.length; ++i) {
+			const savedSection = this._measures[this._cursor.measure].sections[i];
+			if (savedSection.beat === this._cursor.beat) {
+				document.getElementById('section').value = savedSection.value;
 			}
 		}
-		// Update UI feedback for existing annotation on current beat
+		// Update UI feedback for existing syllabe on current beat
 		document.getElementById('syllabe').value = '';
 		for (let i = 0; i < this._measures[this._cursor.measure].syllabes.length; ++i) {
 			const savedSyllabe = this._measures[this._cursor.measure].syllabes[i];
 			if (savedSyllabe.beat === this._cursor.beat) {
 				document.getElementById('syllabe').value = savedSyllabe.value;
+			}
+		}
+		// Update UI feedback for existing tempo on current beat
+		document.getElementById('tempo').value = '';
+		for (let i = 0; i < this._measures[this._cursor.measure].tempo.length; ++i) {
+			const savedTempo = this._measures[this._cursor.measure].tempo[i];
+			if (savedTempo.beat === this._cursor.beat) {
+				document.getElementById('tempo').value = savedTempo.value;
 			}
 		}
 	}
@@ -707,29 +742,29 @@ class TabMaker {
 	}
 
 
-	_addAnnotation() {
-		const annotationValue = document.getElementById('annotation').value;
-		if (annotationValue !== '') {
-			const annotation = {
+	_addSection() {
+		const sectionValue = document.getElementById('section').value;
+		if (sectionValue !== '') {
+			const section = {
 				beat: this._cursor.beat,
-				value: annotationValue
+				value: sectionValue
 			};
 
 			let exists = false;
 			let existingIndex = -1;
-			for (let i = 0; i < this._measures[this._cursor.measure].annotations.length; ++i) {
-				const savedAnnotation = this._measures[this._cursor.measure].annotations[i];
-				if (JSON.stringify(savedAnnotation) === JSON.stringify(annotation)) { // Note already saved
+			for (let i = 0; i < this._measures[this._cursor.measure].sections.length; ++i) {
+				const savedSection = this._measures[this._cursor.measure].sections[i];
+				if (JSON.stringify(savedSection) === JSON.stringify(section)) { // Section already saved
 					exists = true;
-				} else if (savedAnnotation.value !== annotation.value && savedAnnotation.beat === annotation.beat) {
+				} else if (savedSection.value !== section.value && savedSection.beat === section.beat) {
 					existingIndex = i;
 				}
 			}
 
 			if (existingIndex !== -1) { // Replace existing note if already exists
-				this._measures[this._cursor.measure].annotations[existingIndex] = annotation;
+				this._measures[this._cursor.measure].sections[existingIndex] = section;
 			} else if (!exists) { // Create note if no matching note were found in measure
-				this._measures[this._cursor.measure].annotations.push(annotation);
+				this._measures[this._cursor.measure].sections.push(section);
 			}
 
 			this._refreshTab();
@@ -737,12 +772,151 @@ class TabMaker {
 	}
 
 
-	_removeAnnotation() {
-		for (let i = 0; i < this._measures[this._cursor.measure].annotations.length; ++i) {
-			if (this._measures[this._cursor.measure].annotations[i].beat === this._cursor.beat) {
-				this._measures[this._cursor.measure].annotations.splice(i, 1);
+	_removeSection() {
+		for (let i = 0; i < this._measures[this._cursor.measure].sections.length; ++i) {
+			if (this._measures[this._cursor.measure].sections[i].beat === this._cursor.beat) {
+				this._measures[this._cursor.measure].sections.splice(i, 1);
 				this._refreshTab();
 				break;
+			}
+		}
+	}
+
+
+	_pasteSection(event) {
+		const startSection = this._measures[event.target.dataset.measure].sections[event.target.dataset.section];
+		let endSectionMeasureIndex = -1;
+		let endSectionBeat = -1;
+		const copiedMeasures = [];
+		// Find next section or tab ending
+		for (let i = parseInt(event.target.dataset.measure); i < this._measures.length; ++i) {
+			let iteratorInit = 0;
+			if (this._measures[i].sections.length > 1) {
+				for (let j = 0; j < this._measures[i].sections.length; ++j) {
+					if (this._measures[i].sections[j] === startSection) {
+						iteratorInit = i + 1;
+						break;
+					}
+				}
+			}
+
+			for (let j = iteratorInit; j < this._measures[i].sections.length; ++j) {
+				if (this._measures[i].sections[j] !== startSection) {
+					endSectionMeasureIndex = i;
+					endSectionBeat = this._measures[i].sections[j].beat;
+					break;
+				}
+			}
+			// If we found a match, we stop loop
+			if (endSectionMeasureIndex !== -1) {
+				break;
+			} else {
+				copiedMeasures.push(this._measures[i]);
+			}
+		}
+
+		if (endSectionMeasureIndex === -1) {
+			endSectionMeasureIndex = this._measures.length;
+		}
+		// Next section is in the same measure
+		if (copiedMeasures.length === 0) {
+			// Clear target measure beat that contains item in interval
+			const clearValues = key => {
+				if (this._measures[this._cursor.measure][key].length > 0) {
+					const items = this._measures[this._cursor.measure][key];
+					for (let i = items.length - 1; i >= 0; --i) {
+						if (items[i].beat >= startSection.beat && items[i].beat < endSectionBeat) {
+							items.splice(i, 1);
+						}
+					}
+				}
+			};
+
+			const copyValues = (items, key) => {
+				clearValues(key);
+				for (let i = 0; i < items.length; ++i) {
+					if (items[i].beat >= startSection.beat && items[i].beat < endSectionBeat) {
+						this._measures[this._cursor.measure][key].push(items[i]);
+					}
+				}
+			};
+			// Update target measure
+			const sourceMeasure = this._measures[event.target.dataset.measure];
+			copyValues(sourceMeasure.chords, 'chords');
+			copyValues(sourceMeasure.dynamics, 'dynamics');
+			copyValues(sourceMeasure.notes, 'notes');
+			copyValues(sourceMeasure.syllabes, 'syllabes');
+		} else {
+			// Clear target measure beat that contains item in interval
+			const clearValues = (key, start, end, measure) => {
+				if (measure[key].length > 0) {
+					const items = measure[key];
+					for (let i = items.length - 1; i >= 0; --i) {
+						if (items[i].beat >= start && items[i].beat < end) {
+							items.splice(i, 1);
+						}
+					}
+				}
+			};
+
+			const copyValues = (items, key, start, end, measure) => {
+				clearValues(key, start, end, measure);
+				for (let i = 0; i < items.length; ++i) {
+					if (items[i].beat >= start && items[i].beat < end) {
+						measure[key].push(items[i]);
+					}
+				}
+			};
+			// Update target measures
+			// First we update with the measure that contains the section start
+			let sourceMeasure = this._measures[event.target.dataset.measure];
+			copyValues(sourceMeasure.chords, 'chords', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
+			copyValues(sourceMeasure.dynamics, 'dynamics', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
+			copyValues(sourceMeasure.notes, 'notes', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
+			copyValues(sourceMeasure.syllabes, 'syllabes', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
+			// Then we iterate the following measures until we reach the endSectionMeasureIndex
+			for (let i = this._cursor.measure + 1; i < this._cursor.measure + endSectionMeasureIndex; ++i) {
+				let sourceMeasure = this._measures[parseInt(event.target.dataset.measure) + (i - this._cursor.measure)];
+				copyValues(sourceMeasure.chords, 'chords', 0, sourceMeasure.length, this._measures[i]);
+				copyValues(sourceMeasure.dynamics, 'dynamics', 0, sourceMeasure.length, this._measures[i]);
+				copyValues(sourceMeasure.notes, 'notes', 0, sourceMeasure.length, this._measures[i]);
+				copyValues(sourceMeasure.syllabes, 'syllabes', 0, sourceMeasure.length, this._measures[i]);
+			}
+			// Finally, we update the last measure before next section
+			sourceMeasure = this._measures[parseInt(event.target.dataset.measure) + endSectionMeasureIndex];
+			copyValues(sourceMeasure.chords, 'chords', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
+			copyValues(sourceMeasure.dynamics, 'dynamics', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
+			copyValues(sourceMeasure.notes, 'notes', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
+			copyValues(sourceMeasure.syllabes, 'syllabes', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
+		}
+
+		this._refreshTab();
+	}
+
+
+	_updateSectionList() {
+		document.getElementById('sections-list').innerHTML = '';
+		for (let i = 0; i < this._measures.length; ++i) {
+			const sections = this._measures[i].sections;
+			if (sections.length > 0) {
+				for (let j = 0; j < sections.length; ++j) {
+					const section = document.createElement('DIV');
+					section.classList.add('section');
+
+					const sectioName = document.createElement('P');
+					sectioName.innerHTML = sections[j].value;
+
+					const pasteSection = document.createElement('IMG');
+					pasteSection.src = './img/paste.svg';
+					pasteSection.dataset.measure = i;
+					pasteSection.dataset.section = j;
+
+					section.appendChild(sectioName);
+					section.appendChild(pasteSection);
+					document.getElementById('sections-list').appendChild(section);
+
+					this._evtIds.push(Events.addEvent('click', pasteSection, this._pasteSection, this));
+				}
 			}
 		}
 	}
@@ -789,11 +963,99 @@ class TabMaker {
 	}
 
 
+	_addTempo() {
+		const tempoValue = document.getElementById('tempo').value;
+		if (tempoValue !== '') {
+			const tempo = {
+				master: false,
+				beat: this._cursor.beat,
+				value: tempoValue
+			};
+
+			let exists = false;
+			let existingIndex = -1;
+			for (let i = 0; i < this._measures[this._cursor.measure].tempo.length; ++i) {
+				const savedTempo = this._measures[this._cursor.measure].tempo[i];
+				if (JSON.stringify(savedTempo) === JSON.stringify(tempo)) { // Note already saved
+					exists = true;
+				} else if (savedTempo.value !== tempo.value && savedTempo.beat === tempo.beat) {
+					existingIndex = i;
+				}
+			}
+
+			if (existingIndex !== -1) { // Replace existing note if already exists
+				this._measures[this._cursor.measure].tempo[existingIndex] = tempo;
+			} else if (!exists) { // Create note if no matching note were found in measure
+				this._measures[this._cursor.measure].tempo.push(tempo);
+			}
+
+			this._refreshTab();
+		}
+	}
+
+
+	_removeTempo() {
+		for (let i = 0; i < this._measures[this._cursor.measure].tempo.length; ++i) {
+			if (this._measures[this._cursor.measure].tempo[i].master === false && this._measures[this._cursor.measure].tempo[i].beat === this._cursor.beat) {
+				this._measures[this._cursor.measure].tempo.splice(i, 1);
+				this._refreshTab();
+				break;
+			}
+		}
+	}
+
+
 	_toggleClickedClass(id) {
 		document.getElementById(id).classList.add('clicked');
 		setTimeout(() => {
 			document.getElementById(id).classList.remove('clicked');
 		}, 200);
+	}
+
+
+	// Exporting
+
+
+	_downloadAsPDF() {
+		var imgData = this._canvas.toDataURL('image/png');
+	  var pdf = new jsPDF('p', 'mm', 'a4', true);
+		var position = 0;
+
+		var imgWidth = 200;
+		var pageHeight = 297;
+		var imgHeight = this._canvas.height * imgWidth / this._canvas.width;
+		var heightLeft = imgHeight;
+
+	  pdf.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight, undefined, 'FAST');
+		heightLeft -= pageHeight;
+
+		while (heightLeft >= 0) {
+		  position = heightLeft - imgHeight;
+		  pdf.addPage();
+		  pdf.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight, undefined, 'FAST');
+		  heightLeft -= pageHeight;
+		}
+
+	  pdf.save("download.pdf");
+	}
+
+
+	_exportProject() {
+		// Force saving of tab
+		this._refreshTab();
+		// Extract info from local storage
+		const lsValue = JSON.parse(window.localStorage.getItem(this._lsName));
+		const filename = `${lsValue.info.composer}-${lsValue.info.name}.json`;
+		const jsonStr = JSON.stringify(lsValue, null, 2);
+		const element = document.createElement('A');
+		// Link attributes to store output
+		element.setAttribute('href', `data:text/plain;charset=utf-8,${encodeURIComponent(jsonStr)}`);
+		element.setAttribute('download', filename);
+		element.style.display = 'none';
+		// Downloading part
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
 	}
 
 
