@@ -72,7 +72,7 @@ class TabMaker {
 		Shortcut.removeAll();
 		// Remove all standard events
 		for (let i = 0; i < this._evtIds.length; ++i) {
-			Events.addEvent(this._evtIds[i]);
+			Events.removeEvent(this._evtIds[i]);
 		}
 		// Remove all class keys
 		Object.keys(this).forEach(key => {

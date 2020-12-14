@@ -15,6 +15,8 @@ class GuiTab {
 
 		this._tab = null;
 
+		this._evtIds = [];
+
 		this._init();
 	}
 
@@ -36,6 +38,23 @@ class GuiTab {
 
 
 	_fillExistingProjects() {
+		this._loadProjectFromLs();
+	}
+
+
+	_loadProjectFromLs() {
+		if (this._evtIds.length > 0) {
+			for (let i = 0; i < this._evtIds.length; ++i) {
+				Events.removeEvent(this._evtIds[i]);
+			}
+		}
+
+		for (let i = document.getElementById('existing-project').children.length - 1; i >= 0; --i) {
+			if (document.getElementById('existing-project').children[i].tagName !== 'BUTTON') {
+				document.getElementById('existing-project').removeChild(document.getElementById('existing-project').children[i]);
+			}
+		}
+
 		const lsObject = { ...window.localStorage };
 		const ls = [];
 
@@ -52,11 +71,27 @@ class GuiTab {
 		if (ls.length > 0) {
 			for (let i = 0; i < ls.length; ++i) {
 				const project = document.createElement('DIV');
-				project.innerHTML = ls[i].name;
+				const title = document.createElement('H1');
+				const composer = document.createElement('P');
+				const icon = document.createElement('IMG');
+				const deleteIcon = document.createElement('IMG');
+
+				project.classList.add('saved-project');
 				project.dataset.key = ls[i].name;
 				project.dataset.value = ls[i].value;
-				document.getElementById('existing-project').appendChild(project);
-				Events.addEvent('click', project, this._createExistingProject, this);
+				title.innerHTML = ls[i].name.split('-')[1];
+				composer.innerHTML = ls[i].name.split('-')[2];
+				icon.src = './img/guitar.svg';
+				deleteIcon.src = './img/delete.svg';
+				deleteIcon.classList.add('delete');
+
+				project.appendChild(title);
+				project.appendChild(composer);
+				project.appendChild(icon);
+				project.appendChild(deleteIcon);
+				document.getElementById('existing-project').insertBefore(project, document.getElementById('existing-project').firstChild);
+				this._evtIds.push(Events.addEvent('click', project, this._createExistingProject, this));
+				this._evtIds.push(Events.addEvent('click', deleteIcon, this._removeExistingProject, this));
 			}
 		}
 	}
@@ -119,7 +154,13 @@ class GuiTab {
 		this._homeContainer.style.display = 'none';
 		this._projectContainer.style.display = 'flex';
 		const item = JSON.parse(event.target.dataset.value);
-		const tabMaker = new TabMaker({
+
+		if (this._tab !== null) {
+			this._tab.destroy();
+			this._tab = null;
+		}
+
+		this._tab = new TabMaker({
 			name: item.info.name,
 			composer: item.info.composer,
 			bpm: item.info.bpm,
@@ -128,6 +169,13 @@ class GuiTab {
 			measures: item.measures,
 			lsKey: event.target.dataset.key
 		});
+	}
+
+
+	_removeExistingProject(event) {
+		event.stopPropagation();
+		window.localStorage.removeItem(event.target.parentNode.dataset.key);
+		this._loadProjectFromLs();
 	}
 
 
@@ -140,6 +188,8 @@ class GuiTab {
 		this._homeContainer.style.display = 'flex';
 		this._projectOptions.style.display = 'none';
 		this._projectContainer.style.display = 'none';
+
+		this._loadProjectFromLs();
 	}
 
 
@@ -159,6 +209,12 @@ class GuiTab {
 	_openProject(options) {
 		this._projectOptions.style.display = 'none';
 		this._projectContainer.style.display = 'flex';
+
+		if (this._tab !== null) {
+			this._tab.destroy();
+			this._tab = null;
+		}
+
 		this._tab = new TabMaker(options);
 	}
 

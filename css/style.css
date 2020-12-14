@@ -72,19 +72,77 @@ nav h1 {
 	padding: 0;
 }
 
+/* Homepage */
+
 div.home-container {
 	align-items: center;
-	background-color: grey;
 	border-radius: 5px;
 	display: flex;
-	height: 20rem;
+	flex-direction: column;
+	height: 100%;
 	justify-content: center;
-	width: 20rem;
+	width: 100%;
 }
+
+div.home-container h2 {
+	color: black;
+	margin-bottom: 2rem;
+}
+
+div.existing-project {
+	display: flex;
+	justify-content: center;
+	max-height: 30rem;
+	max-width: 80%;
+	padding: 0 1rem;
+}
+
+div.saved-project {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	position: relative;
+}
+
+div.saved-project h1,
+div.saved-project p {
+	color: black;
+}
+
+div.saved-project img {
+	height: 5rem;
+	margin: 1rem;
+	width: 5rem;
+}
+
+div.saved-project img.delete {
+	position: absolute;
+	right: 0;
+	height: 1.5rem;
+	filter: invert(100%);
+	top: 0;
+	margin: .5rem;
+	width: 1.5rem;
+}
+
+div.saved-project,
+div.existing-project button {
+	background-color: rgba(0, 0, 0, .1);
+	border: solid 1px black;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 1.3rem;
+	padding: 2rem;
+	margin: 2rem;
+	width: auto;
+}
+
+/* New project options */
 
 div.project-options {
 	align-items: center;
-	background-color: grey;
+	background-color: rgba(0, 0, 0, .1);
 	border-radius: 5px;
 	display: none;
 	flex-direction: column;
@@ -95,8 +153,10 @@ div.project-options {
 	width: auto;
 }
 
-div.project-options input {
+div.project-options input,
+div.project-options select {
 	border: solid 1px transparent;
+	margin-bottom: 1rem;
 }
 
 div.project-options input.error {
