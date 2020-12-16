@@ -20,9 +20,11 @@ class TabMaker {
 			this._lsName = options.lsKey;
 		} else {
 			this._timeSignature = {
-				beat: parseInt(options.timeSignature.split('/')[0]),
-				measure: parseInt(options.timeSignature.split('/')[1]),
-				string: options.timeSignature
+				master: true, // Master time signature can't be removed
+				beat: parseInt(options.timeSignature.split('/')[1]),
+				measure: parseInt(options.timeSignature.split('/')[0]),
+				string: options.timeSignature,
+				measureNumber: 0
 			};
 			this._measures = [];
 		}
@@ -152,6 +154,9 @@ class TabMaker {
 		// Tempo events
 		this._evtIds.push(Events.addEvent('click', document.getElementById('add-tempo'), this._addTempo, this));
 		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-tempo'), this._removeTempo, this));
+		// Time signature events
+		this._evtIds.push(Events.addEvent('click', document.getElementById('add-time-signature'), this._addTimeSignature, this));
+		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-time-signature'), this._removeTimeSignature, this));
 		// Local keayboard event
 		this._evtIds.push(Events.addEvent('keydown', document, this._keyboardClicked, this));
 	}
@@ -170,10 +175,12 @@ class TabMaker {
 		// Fill first line with
 		if (this._measures.length === 0) {
 			for (let i = 0; i < this._measurePerLines; ++i) {
+				const timeSignature = Object.assign({}, this._timeSignature);
+				timeSignature.measureNumber = i;
 				// Then create the first measure, its index refer to its position
 				this._measures.push({
-					subBeats: this._timeSignature.beat * this._timeSignature.measure,
-					timeSignature: this._timeSignature, // As it can be modified for any measure, we store the default value
+					subBeats: timeSignature.beat * timeSignature.measure,
+					timeSignature: timeSignature,
 					length: this._measureLength,
 					tempo: [],
 					notes: [],
@@ -185,7 +192,7 @@ class TabMaker {
 			}
 
 			this._measures[0].tempo.push({
-				master: true,
+				master: true, // Master tempo can't be removed
 				beat: 0,
 				value: this._bpm
 			});
@@ -260,20 +267,26 @@ class TabMaker {
 	_drawMeasure(measure, measureNumber, lineNumber) {
 		const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
 		this._ctx.strokeStyle = this._colors.subBar;
-		for (let i = 0; i < measure.subBeats; i += measure.timeSignature.measure) {
-			// Draw sub beat horizontal line
+		// Compute offset according to line previous measures length
+		let measureOffset = 0;
+		for (let i = lineNumber * this._measurePerLines; i < lineNumber * this._measurePerLines + measureNumber; ++i) {
+			measureOffset += this._measures[i].length;
+		}
+		// Draw sub beat bars for current measure
+		for (let i = 0; i < measure.subBeats; i += measure.timeSignature.beat) {
+			// Draw sub beat vertical line
 			this._ctx.beginPath();
-			this._ctx.moveTo((this._lineSpace * 2) + (i * this._lineSpace) + (measureNumber * measure.length), yOffset);
-			this._ctx.lineTo((this._lineSpace * 2) + (i * this._lineSpace) + (measureNumber * measure.length), yOffset + ((this._lineCount - 1) * this._lineSpace));
+			this._ctx.moveTo((this._lineSpace * 2) + (i * this._lineSpace) + measureOffset, yOffset);
+			this._ctx.lineTo((this._lineSpace * 2) + (i * this._lineSpace) + measureOffset, yOffset + ((this._lineCount - 1) * this._lineSpace));
 			this._ctx.stroke();
 			this._ctx.closePath();
 		}
-		// Draw measure end horizontal line
+		// Draw measure end vertical line
 		this._ctx.strokeStyle = this._colors.bar;
 		this._ctx.lineWidth = 1.5;
 		this._ctx.beginPath();
-		this._ctx.moveTo((this._lineSpace * 2) + (measure.subBeats * this._lineSpace) + (measureNumber * measure.length), yOffset);
-		this._ctx.lineTo((this._lineSpace * 2) + (measure.subBeats * this._lineSpace) + (measureNumber * measure.length), yOffset + ((this._lineCount - 1) * this._lineSpace));
+		this._ctx.moveTo((this._lineSpace * 2) + (measure.subBeats * this._lineSpace) + measureOffset, yOffset);
+		this._ctx.lineTo((this._lineSpace * 2) + (measure.subBeats * this._lineSpace) + measureOffset, yOffset + ((this._lineCount - 1) * this._lineSpace));
 		this._ctx.stroke();
 		this._ctx.lineWidth = 1;
 		this._ctx.closePath();
@@ -368,7 +381,12 @@ class TabMaker {
 	_drawTabLine(lineNumber) {
 		// The y offset depends on the line number, spaced in top/bottom with 3 lines space
 		const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
-
+		// Compute line length according to line its measures length
+		let lineLength = 0;
+		for (let i = lineNumber * this._measurePerLines; i < lineNumber * this._measurePerLines + this._measurePerLines; ++i) {
+			lineLength += this._measures[i].length;
+		}
+		// Start line drawing
 		this._ctx.beginPath();
 		this._ctx.fillStyle = this._colors.text;
 		this._ctx.strokeStyle = this._colors.bar;
@@ -383,12 +401,12 @@ class TabMaker {
 			this._ctx.fillText(this._strings[i], 0, yOffset + (i * this._lineSpace));
 			// Draw horizontal line
 			this._ctx.moveTo((this._lineSpace * 2), yOffset + (i * this._lineSpace));
-			this._ctx.lineTo(this._lineLength + (this._lineSpace * 2), yOffset + (i * this._lineSpace));
+			this._ctx.lineTo(lineLength + (this._lineSpace * 2), yOffset + (i * this._lineSpace));
 			this._ctx.stroke();
 		}
 		// Draw line final vertical bar
-		this._ctx.moveTo(this._lineLength + (this._lineSpace * 2), yOffset);
-		this._ctx.lineTo(this._lineLength + (this._lineSpace * 2), yOffset + ((this._lineCount - 1) * this._lineSpace));
+		this._ctx.moveTo(lineLength + (this._lineSpace * 2), yOffset);
+		this._ctx.lineTo(lineLength + (this._lineSpace * 2), yOffset + ((this._lineCount - 1) * this._lineSpace));
 		this._ctx.fillText(this._measurePerLines * lineNumber, this._lineSpace + (this._lineSpace / 2), yOffset - (this._fontSize / 2));
 		this._ctx.stroke();
 		// End line drawing
@@ -454,7 +472,8 @@ class TabMaker {
 			document.getElementById('chord'),
 			document.getElementById('section'),
 			document.getElementById('syllabe'),
-			document.getElementById('tempo')
+			document.getElementById('tempo'),
+			document.getElementById('time-signature')
 		];
 
 		if (inputActive.indexOf(document.activeElement) !== -1) {
@@ -502,25 +521,42 @@ class TabMaker {
 			this._toggleClickedClass('q-left');
 			let ctrlModifier = 1;
 			if (withCtrl === true) {
-				ctrlModifier = (this._timeSignature.beat * this._timeSignature.measure);
+				ctrlModifier = (this._measures[this._cursor.measure].timeSignature.beat * this._measures[this._cursor.measure].timeSignature.measure);
 			}
 
 			if (this._cursor.x - this._lineSpace - (this._lineSpace * ctrlModifier) > 0) {
-				this._cursor.x -= (this._lineSpace * ctrlModifier);
 				// First decrement the measure count
-				if (this._cursor.beat === 0 || ctrlModifier > 1) {
+				if (this._cursor.beat === 0) {
 					--this._cursor.measure;
-				}
-				// Then update the beat number
-				if (ctrlModifier === 1) {
-					this._cursor.beat = (this._cursor.beat - ctrlModifier + (this._timeSignature.beat * this._timeSignature.measure)) % (this._timeSignature.beat * this._timeSignature.measure);
+					// Then update the beat number
+					if (ctrlModifier === 1) {
+						this._cursor.x -= this._lineSpace;
+						this._cursor.beat = (this._measures[this._cursor.measure].timeSignature.beat * this._measures[this._cursor.measure].timeSignature.measure) - 1;
+					} else {
+						this._cursor.x -= (this._lineSpace * (this._measures[this._cursor.measure].timeSignature.beat * this._measures[this._cursor.measure].timeSignature.measure));
+						this._cursor.beat = 0;
+					}
+				} else {
+					if (ctrlModifier === 1) {
+						this._cursor.x -= this._lineSpace;
+						--this._cursor.beat;
+					} else {
+						this._cursor.x -= (this._lineSpace * this._cursor.beat);
+						this._cursor.beat = 0;
+					}
 				}
 			} else if (this._cursor.line !== 0) { // New line for cursor
 				--this._cursor.measure;
 				this._cursor.beat = (this._timeSignature.beat * this._timeSignature.measure) - 1;
 				--this._cursor.line;
+
+				// Compute offset according to line previous measures length
+				let lineLength = 0;
+				for (let i = this._cursor.line * this._measurePerLines; i < this._cursor.line * this._measurePerLines + this._measurePerLines; ++i) {
+					lineLength += this._measures[i].length;
+				}
 				// Move cursor on the previous line
-				this._cursor.x = this._lineLength + this._lineSpace - (this._lineSpace / 2);
+				this._cursor.x = lineLength + this._lineSpace - (this._lineSpace / 2);
 				this._cursor.y -= this._tabLineHeight + this._tabLineMargin;
 			}
 			// Update container scroll according to cursor position
@@ -536,18 +572,30 @@ class TabMaker {
 			this._toggleClickedClass('d-right');
 			let ctrlModifier = 1;
 			if (withCtrl === true) {
-				ctrlModifier = (this._timeSignature.beat * this._timeSignature.measure);
+				ctrlModifier = (this._measures[this._cursor.measure].timeSignature.beat * this._measures[this._cursor.measure].timeSignature.measure);
 			}
 
-			if (this._cursor.x + (this._lineSpace * ctrlModifier) < (this._lineLength + (this._lineSpace / 2))) {
-				this._cursor.x += this._lineSpace * ctrlModifier;
+			// Compute offset according to line previous measures length
+			let lineLength = 0;
+			for (let i = this._cursor.line * this._measurePerLines; i < this._cursor.line * this._measurePerLines + this._measurePerLines; ++i) {
+				lineLength += this._measures[i].length;
+			}
 
-				if (ctrlModifier === 1) {
-					this._cursor.beat = (this._cursor.beat + ctrlModifier) % (this._timeSignature.beat * this._timeSignature.measure);
-				}
-
-				if (this._cursor.beat === 0 || ctrlModifier > 1) {
+			if (this._cursor.x + (this._lineSpace * ctrlModifier) <= (lineLength	 + (this._lineSpace / 2))) {
+				// Cursor is on last subbeat of measure
+				if (this._cursor.beat === this._measures[this._cursor.measure].subBeats) {
+					this._cursor.x += this._lineSpace;
 					++this._cursor.measure;
+					this._cursor.beat = 0;
+				} else {
+					if (ctrlModifier === 1) {
+						this._cursor.x += this._lineSpace;
+						++this._cursor.beat;
+					} else {
+						this._cursor.x += (this._lineSpace * (this._measures[this._cursor.measure].subBeats - this._cursor.beat));
+						++this._cursor.measure;
+						this._cursor.beat = 0;
+					}
 				}
 				// Update container scroll according to cursor position
 				document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
@@ -568,11 +616,13 @@ class TabMaker {
 					document.getElementById('tab-container').scrollTo(0, document.getElementById('tab-container').scrollHeight);
 					// Append measures for new line
 					for (let i = 0; i < this._measurePerLines; ++i) {
+						const timeSignature = Object.assign({}, this._timeSignature);
+						timeSignature.measureNumber = (this._cursor.line * this._measurePerLines) + i;
 						// Then create the first measure, its index refer to its position
 						this._measures.push({
-							subBeats: this._timeSignature.beat * this._timeSignature.measure,
-							timeSignature: this._timeSignature, // As it can be modified for any measure, we store the default value
-							length: this._measureLength,
+							subBeats: timeSignature.beat * timeSignature.measure,
+							timeSignature: timeSignature,
+							length: (timeSignature.beat * timeSignature.measure) * this._lineSpace,
 							tempo: [],
 							notes: [],
 							dynamics: [],
@@ -625,8 +675,8 @@ class TabMaker {
 		this._ctx.fill();
 		// Update UI feedback for tab info
 		const measure = this._cursor.measure + 1;
-		const beat = Math.floor(this._cursor.beat / this._timeSignature.beat) + 1;
-		const subBeat = (this._cursor.beat % this._timeSignature.beat) + 1;
+		const beat = Math.floor(this._cursor.beat / this._measures[this._cursor.measure].timeSignature.beat) + 1;
+		const subBeat = (this._cursor.beat % this._measures[this._cursor.measure].timeSignature.beat) + 1;
 		document.getElementById('cursor-position').innerHTML = `Measure ${measure}, Beat ${beat}/${subBeat}`;
 		// Update UI feedback for existing chord on current beat
 		document.getElementById('chord').value = '';
@@ -660,6 +710,12 @@ class TabMaker {
 				document.getElementById('tempo').value = savedTempo.value;
 			}
 		}
+		// Update UI feedback for existing time signature on current beat
+		document.getElementById('time-signature').value = '';
+		const savedTimeSignature = this._measures[this._cursor.measure].timeSignature;
+		if (savedTimeSignature.measureNumber === this._cursor.measure) {
+			document.getElementById('time-signature').value = savedTimeSignature.string;
+		}
 	}
 
 
@@ -667,43 +723,45 @@ class TabMaker {
 
 
 	_dynamicClicked(event) {
-		if (event.currentTarget.dataset.value === 'x') {
-			if (this._measures[this._cursor.measure].dynamics.length > 0) {
-				for (let i = 0; i < this._measures[this._cursor.measure].dynamics.length; ++i) {
-					if (this._measures[this._cursor.measure].dynamics[i].beat === this._cursor.beat) {
-						this._measures[this._cursor.measure].dynamics.splice(i, 1);
-						this._refreshTab();
-						break;
+		if (!this._isInputFocused()) {
+			if (event.currentTarget.dataset.value === 'x') {
+				if (this._measures[this._cursor.measure].dynamics.length > 0) {
+					for (let i = 0; i < this._measures[this._cursor.measure].dynamics.length; ++i) {
+						if (this._measures[this._cursor.measure].dynamics[i].beat === this._cursor.beat) {
+							this._measures[this._cursor.measure].dynamics.splice(i, 1);
+							this._refreshTab();
+							break;
+						}
 					}
+				}
+
+				return;
+			}
+
+			const dynamic = {
+				beat: this._cursor.beat,
+				value: event.target.dataset.value
+			};
+
+			let exists = false;
+			let existingIndex = -1;
+			for (let i = 0; i < this._measures[this._cursor.measure].dynamics.length; ++i) {
+				const savedDynamics = this._measures[this._cursor.measure].dynamics[i];
+				if (JSON.stringify(savedDynamics) === JSON.stringify(dynamic)) { // Note already saved
+					exists = true;
+				} else if (savedDynamics.value !== dynamic.value && savedDynamics.beat === dynamic.beat) {
+					existingIndex = i;
 				}
 			}
 
-			return;
-		}
-
-		const dynamic = {
-			beat: this._cursor.beat,
-			value: event.target.dataset.value
-		};
-
-		let exists = false;
-		let existingIndex = -1;
-		for (let i = 0; i < this._measures[this._cursor.measure].dynamics.length; ++i) {
-			const savedDynamics = this._measures[this._cursor.measure].dynamics[i];
-			if (JSON.stringify(savedDynamics) === JSON.stringify(dynamic)) { // Note already saved
-				exists = true;
-			} else if (savedDynamics.value !== dynamic.value && savedDynamics.beat === dynamic.beat) {
-				existingIndex = i;
+			if (existingIndex !== -1) { // Replace existing note if already exists
+				this._measures[this._cursor.measure].dynamics[existingIndex] = dynamic;
+			} else if (!exists) { // Create note if no matching note were found in measure
+				this._measures[this._cursor.measure].dynamics.push(dynamic);
 			}
-		}
 
-		if (existingIndex !== -1) { // Replace existing note if already exists
-			this._measures[this._cursor.measure].dynamics[existingIndex] = dynamic;
-		} else if (!exists) { // Create note if no matching note were found in measure
-			this._measures[this._cursor.measure].dynamics.push(dynamic);
+			this._refreshTab();
 		}
-
-		this._refreshTab();
 	}
 
 
@@ -1009,6 +1067,38 @@ class TabMaker {
 			}
 		}
 	}
+
+
+	_addTimeSignature() {
+		const timeSignatureValue = document.getElementById('time-signature').value;
+		if (timeSignatureValue !== '') {
+			const timeSignature = {
+				master: false,
+				beat: parseInt(timeSignatureValue.split('/')[1]),
+				measure: parseInt(timeSignatureValue.split('/')[0]),
+				string: timeSignatureValue,
+				measureNumber: this._cursor.measure
+			};
+
+			const savedTimeSignature = this._measures[this._cursor.measure].timeSignature;
+			if (JSON.stringify(savedTimeSignature) !== JSON.stringify(timeSignature)) {
+				this._measures[this._cursor.measure].timeSignature = timeSignature;
+				this._measures[this._cursor.measure].subBeats = timeSignature.beat * timeSignature.measure;
+				this._measures[this._cursor.measure].length = (timeSignature.beat * timeSignature.measure) * this._lineSpace;
+			}
+
+			this._refreshTab();
+		}
+	}
+
+
+	_removeTimeSignature() {
+		if (this._measures[this._cursor.measure].timeSignature.master === false) {
+			this._measures[this._cursor.measure].timeSignature = this._timeSignature;
+			this._refreshTab();
+		}
+	}
+
 
 
 	_toggleClickedClass(id) {

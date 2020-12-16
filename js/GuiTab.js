@@ -153,7 +153,7 @@ class GuiTab {
 	_createExistingProject(event) {
 		this._homeContainer.style.display = 'none';
 		this._projectContainer.style.display = 'flex';
-		const item = JSON.parse(event.target.dataset.value);
+		const item = JSON.parse(event.currentTarget.dataset.value);
 
 		if (this._tab !== null) {
 			this._tab.destroy();
@@ -167,7 +167,7 @@ class GuiTab {
 			timeSignature: item.info.timeSignature,
 			instrumentType: item.info.instrumentType,
 			measures: item.measures,
-			lsKey: event.target.dataset.key
+			lsKey: event.currentTarget.dataset.key
 		});
 	}
 
