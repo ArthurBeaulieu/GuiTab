@@ -407,7 +407,7 @@ class TabMaker {
 		// Draw line final vertical bar
 		this._ctx.moveTo(lineLength + (this._lineSpace * 2), yOffset);
 		this._ctx.lineTo(lineLength + (this._lineSpace * 2), yOffset + ((this._lineCount - 1) * this._lineSpace));
-		this._ctx.fillText(this._measurePerLines * lineNumber, this._lineSpace + (this._lineSpace / 2), yOffset - (this._fontSize / 2));
+		this._ctx.fillText(this._measurePerLines * lineNumber, this._lineSpace, yOffset - (this._fontSize / 2));
 		this._ctx.stroke();
 		// End line drawing
 		this._ctx.closePath();
