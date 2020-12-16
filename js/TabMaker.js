@@ -159,6 +159,9 @@ class TabMaker {
 		this._evtIds.push(Events.addEvent('click', document.getElementById('remove-time-signature'), this._removeTimeSignature, this));
 		// Local keayboard event
 		this._evtIds.push(Events.addEvent('keydown', document, this._keyboardClicked, this));
+		// Playback events
+		this._evtIds.push(Events.addEvent('click', document.getElementById('start-playback'), this._startPlayback, this));
+		this._evtIds.push(Events.addEvent('click', document.getElementById('stop-playback'), this._stopPlayback, this));
 	}
 
 
@@ -198,7 +201,6 @@ class TabMaker {
 			});
 		}
 
-		this._playback.startPlayback(this._measures, this._cursor);
 		this._ctx.imageSmoothingEnabled = true;
 		this._refreshTab();
 	}
@@ -220,7 +222,8 @@ class TabMaker {
 				bpm: this._bpm,
 				type: this._type,
 				timeSignature: this._timeSignature,
-				instrumentType: this._type
+				instrumentType: this._type,
+				version: '0.1.4'
 			},
 			measures: this._measures
 		}));
@@ -583,7 +586,7 @@ class TabMaker {
 
 			if (this._cursor.x + (this._lineSpace * ctrlModifier) <= (lineLength	 + (this._lineSpace / 2))) {
 				// Cursor is on last subbeat of measure
-				if (this._cursor.beat === this._measures[this._cursor.measure].subBeats) {
+				if (this._cursor.beat === this._measures[this._cursor.measure].subBeats - 1) {
 					this._cursor.x += this._lineSpace;
 					++this._cursor.measure;
 					this._cursor.beat = 0;
@@ -874,6 +877,9 @@ class TabMaker {
 			// If we found a match, we stop loop
 			if (endSectionMeasureIndex !== -1) {
 				break;
+			} else if (i >= this._cursor.measure) {
+				endSectionMeasureIndex = this._cursor.measure - 1;
+				endSectionBeat = this._measures[this._cursor.measure - 1].subBeats;
 			} else {
 				copiedMeasures.push(this._measures[i]);
 			}
@@ -941,6 +947,27 @@ class TabMaker {
 			// Then we iterate the following measures until we reach the endSectionMeasureIndex
 			for (let i = this._cursor.measure + 1; i < this._cursor.measure + endSectionMeasureIndex; ++i) {
 				let sourceMeasure = this._measures[parseInt(event.target.dataset.measure) + (i - this._cursor.measure)];
+				if (!this._measures[i]) {
+					// Add one line of measures
+					const index = this._measures.length;
+					for (let i = 0; i < this._measurePerLines; ++i) {
+						const timeSignature = Object.assign({}, this._timeSignature);
+						timeSignature.measureNumber = index + i;
+						// Then create the first measure, its index refer to its position
+						this._measures.push({
+							subBeats: timeSignature.beat * timeSignature.measure,
+							timeSignature: timeSignature,
+							length: this._measureLength,
+							tempo: [],
+							notes: [],
+							dynamics: [],
+							chords: [],
+							sections: [],
+							syllabes: []
+						});
+					}
+					this._canvas.height += this._tabLineHeight + this._tabLineMargin;
+				}
 				copyValues(sourceMeasure.chords, 'chords', 0, sourceMeasure.length, this._measures[i]);
 				copyValues(sourceMeasure.dynamics, 'dynamics', 0, sourceMeasure.length, this._measures[i]);
 				copyValues(sourceMeasure.notes, 'notes', 0, sourceMeasure.length, this._measures[i]);
@@ -948,6 +975,28 @@ class TabMaker {
 			}
 			// Finally, we update the last measure before next section
 			sourceMeasure = this._measures[parseInt(event.target.dataset.measure) + endSectionMeasureIndex];
+
+			if (!this._measures[this._cursor.measure + endSectionMeasureIndex]) {
+				// Add one line of measures
+				const index = this._measures.length;
+				for (let i = 0; i < this._measurePerLines; ++i) {
+					const timeSignature = Object.assign({}, this._timeSignature);
+					timeSignature.measureNumber = index + i;
+					// Then create the first measure, its index refer to its position
+					this._measures.push({
+						subBeats: timeSignature.beat * timeSignature.measure,
+						timeSignature: timeSignature,
+						length: this._measureLength,
+						tempo: [],
+						notes: [],
+						dynamics: [],
+						chords: [],
+						sections: [],
+						syllabes: []
+					});
+				}
+				this._canvas.height += this._tabLineHeight + this._tabLineMargin;
+			}
 			copyValues(sourceMeasure.chords, 'chords', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
 			copyValues(sourceMeasure.dynamics, 'dynamics', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
 			copyValues(sourceMeasure.notes, 'notes', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
@@ -1153,6 +1202,26 @@ class TabMaker {
 		element.click();
 		document.body.removeChild(element);
 	}
+
+
+	// Playback utils
+
+
+	_startPlayback() {
+		this._playback.startPlayback({
+			type: this._type,
+			strings: this._strings,
+			bpm: this._bpm
+		}, this._measures, this._cursor, () => {
+			console.log('refer');
+		});
+	}
+
+
+	_stopPlayback() {
+		this._playback.stopPlayback();
+	}
+
 
 
 	// Canvas utils

@@ -316,7 +316,6 @@ div.project-section-container {
 	border-left: solid 1px #30363D;
 	display: flex;
 	flex-direction: column;
-	justify-content: flex-start;
 	height: 100%;
 	width: 30rem;
 }
@@ -337,7 +336,7 @@ div.section-header h3 {
 }
 
 div.section-list {
-	height: calc(100% - 12rem);
+	height: calc(100% - 18rem);
 	overflow-y: auto;
 }
 
@@ -355,6 +354,22 @@ div.section img {
 	cursor: pointer;
 	height: 2rem;
 	padding-left: 2rem;
+}
+
+div.playback-control {
+	border-top: solid 1px white;
+	height: 6rem;
+	margin: 2rem;
+	margin-bottom: 0;
+	padding: 1rem;
+	text-align: center;
+}
+
+div.playback-control img {
+	cursor: pointer;
+	height: 2rem;
+	margin: .6rem;
+	width: 2rem;
 }
 
 /* Modal */
