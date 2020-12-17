@@ -1,3 +1,4 @@
+import DropElement from './lib/DropElement.js';
 import TabMaker from './TabMaker.js';
 
 
@@ -9,12 +10,13 @@ class GuiTab {
 		this._projectOptions = null;
 		this._projectContainer = null;
 
+		this._dropTabContainer = null;
 		this._newProjectButton = null;
 		this._homeButton = null;
 		this._aboutButton = null;
 
+		this._dropElement = null;
 		this._tab = null;
-
 		this._evtIds = [];
 
 		this._init();
@@ -26,14 +28,22 @@ class GuiTab {
 		this._projectOptions = document.getElementById('project-options');
 		this._projectContainer = document.getElementById('project-container');
 
+		this._dropTabContainer = document.getElementById('drop-container');
 		this._newProjectButton = document.getElementById('new-project-button');
 		this._homeButton = document.getElementById('home-button');
 		this._aboutButton = document.getElementById('about-button');
 
-		this._fillExistingProjects();
+
+		this._dropElement = new DropElement({
+	    target: this._dropTabContainer,
+	    onDrop: this._droppedTab.bind(this)
+	  });
+
+		Events.addEvent('click', this._dropTabContainer, this._droppedTab, this);
 		Events.addEvent('click', this._newProjectButton, this._createNewProject, this);
 		Events.addEvent('click', this._homeButton, this._homePage, this);
-		Events.addEvent('click', this._aboutButton, this._aboutModal, this);
+
+		this._fillExistingProjects();
 	}
 
 
@@ -62,10 +72,13 @@ class GuiTab {
     let count = keys.length;
 
     while (count--) {
-      ls.push({
-				name: keys[count],
-				value: lsObject[keys[count]]
-			});
+			// Only load guitab items
+			if (keys[count].indexOf('guitab') !== -1) {
+				ls.push({
+					name: keys[count],
+					value: lsObject[keys[count]]
+				});
+			}
     }
 
 		if (ls.length > 0) {
@@ -93,6 +106,22 @@ class GuiTab {
 				this._evtIds.push(Events.addEvent('click', project, this._createExistingProject, this));
 				this._evtIds.push(Events.addEvent('click', deleteIcon, this._removeExistingProject, this));
 			}
+		}
+	}
+
+
+	_droppedTab(event) {
+		if (event.dataTransfer && event.dataTransfer.files) {
+			const files = event.dataTransfer.files;
+	    for (let i = 0, file; file = files[i]; ++i) {
+	      const reader = new FileReader();
+	      reader.onload = (theFile => {
+	        return raw => {
+						this._createDroppedProject(JSON.parse(raw.target.result));
+	        };
+	      })(file);
+	      reader.readAsText(file);
+	    }			
 		}
 	}
 
@@ -168,6 +197,27 @@ class GuiTab {
 			instrumentType: item.info.instrumentType,
 			measures: item.measures,
 			lsKey: event.currentTarget.dataset.key
+		});
+	}
+
+
+	_createDroppedProject(file) {
+		this._homeContainer.style.display = 'none';
+		this._projectContainer.style.display = 'flex';
+
+		if (this._tab !== null) {
+			this._tab.destroy();
+			this._tab = null;
+		}
+
+		this._tab = new TabMaker({
+			name: file.info.name,
+			composer: file.info.composer,
+			bpm: file.info.bpm,
+			timeSignature: file.info.timeSignature,
+			instrumentType: file.info.instrumentType,
+			measures: file.measures,
+			lsKey: `guitab-${file.info.composer}-${file.info.name}-${Date.now()}`
 		});
 	}
 

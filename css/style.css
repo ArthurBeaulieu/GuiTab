@@ -89,6 +89,24 @@ div.home-container h2 {
 	margin-bottom: 2rem;
 }
 
+div.drop-container {
+	align-items: center;
+	background-color: rgba(0, 0, 0, .1);
+	border-radius: 5px;
+	display: flex;
+	height: 10rem;
+	justify-content: center;
+	position: relative;
+	width: 40rem;
+}
+
+div.drop-container::after {
+	content: 'Drop your GuiTab JSON file here';
+	font-size: 1.3rem;
+	font-style: italic;
+	position: absolute;
+}
+
 div.existing-project {
 	display: flex;
 	justify-content: center;

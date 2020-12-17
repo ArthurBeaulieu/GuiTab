@@ -108,7 +108,7 @@ class TabMaker {
 		this._canvas.style.height = `${(this._headerHeight + this._tabLineHeight + this._tabLineMargin) / this._resolutionFactor}px`;
 		// Save in local storage the new project
 		if (this._lsName === '') {
-			this._lsName = `tab-${this._name}-${this._composer}-${Date.now()}`;
+			this._lsName = `guitab-${this._name}-${this._composer}-${Date.now()}`;
 			window.localStorage.setItem(this._lsName, '');
 		} else {
 			// Update canvas, height according to the number of measures
@@ -226,7 +226,7 @@ class TabMaker {
 				type: this._type,
 				timeSignature: this._timeSignature,
 				instrumentType: this._type,
-				version: '0.1.4'
+				version: '0.1.5'
 			},
 			measures: this._measures
 		}));
@@ -861,14 +861,15 @@ class TabMaker {
 		for (let i = parseInt(event.target.dataset.measure); i < this._measures.length; ++i) {
 			let iteratorInit = 0;
 			if (this._measures[i].sections.length > 1) {
+				// Cheching if start section is in studied measure
 				for (let j = 0; j < this._measures[i].sections.length; ++j) {
 					if (this._measures[i].sections[j] === startSection) {
-						iteratorInit = i + 1;
+						iteratorInit = j + 1;
 						break;
 					}
 				}
 			}
-
+			//
 			for (let j = iteratorInit; j < this._measures[i].sections.length; ++j) {
 				if (this._measures[i].sections[j] !== startSection) {
 					endSectionMeasureIndex = i;
