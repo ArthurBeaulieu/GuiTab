@@ -853,10 +853,10 @@ class TabMaker {
 
 
 	_pasteSection(event) {
-		const startSection = this._measures[event.target.dataset.measure].sections[event.target.dataset.section];
+		const startSection = this._measures[parseInt(event.target.dataset.measure)].sections[parseInt(event.target.dataset.section)];
 		let endSectionMeasureIndex = -1;
 		let endSectionBeat = -1;
-		const copiedMeasures = [];
+		let measuresToCopy = 0;
 		// Find next section or tab ending
 		for (let i = parseInt(event.target.dataset.measure); i < this._measures.length; ++i) {
 			let iteratorInit = 0;
@@ -874,6 +874,7 @@ class TabMaker {
 				if (this._measures[i].sections[j] !== startSection) {
 					endSectionMeasureIndex = i;
 					endSectionBeat = this._measures[i].sections[j].beat;
+					++measuresToCopy;					
 					break;
 				}
 			}
@@ -881,18 +882,20 @@ class TabMaker {
 			if (endSectionMeasureIndex !== -1) {
 				break;
 			} else if (i >= this._cursor.measure) {
-				endSectionMeasureIndex = this._cursor.measure - 1;
-				endSectionBeat = this._measures[this._cursor.measure - 1].subBeats;
+				endSectionMeasureIndex = this._cursor.measure;
+				endSectionBeat = this._measures[this._cursor.measure].subBeats;
+				break;
 			} else {
-				copiedMeasures.push(this._measures[i]);
+				++measuresToCopy;
 			}
 		}
 
 		if (endSectionMeasureIndex === -1) {
 			endSectionMeasureIndex = this._measures.length;
+			endSectionBeat = timeSignature.beat * timeSignature.measure;
 		}
 		// Next section is in the same measure
-		if (copiedMeasures.length === 0) {
+		if (measuresToCopy === 0) {
 			// Clear target measure beat that contains item in interval
 			const clearValues = key => {
 				if (this._measures[this._cursor.measure][key].length > 0) {
@@ -914,7 +917,7 @@ class TabMaker {
 				}
 			};
 			// Update target measure
-			const sourceMeasure = this._measures[event.target.dataset.measure];
+			const sourceMeasure = this._measures[parseInt(event.target.dataset.measure)];
 			copyValues(sourceMeasure.chords, 'chords');
 			copyValues(sourceMeasure.dynamics, 'dynamics');
 			copyValues(sourceMeasure.notes, 'notes');
@@ -942,20 +945,20 @@ class TabMaker {
 			};
 			// Update target measures
 			// First we update with the measure that contains the section start
-			let sourceMeasure = this._measures[event.target.dataset.measure];
+			let sourceMeasure = this._measures[parseInt(event.target.dataset.measure)];
 			copyValues(sourceMeasure.chords, 'chords', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
 			copyValues(sourceMeasure.dynamics, 'dynamics', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
 			copyValues(sourceMeasure.notes, 'notes', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
 			copyValues(sourceMeasure.syllabes, 'syllabes', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
 			// Then we iterate the following measures until we reach the endSectionMeasureIndex
-			for (let i = this._cursor.measure + 1; i < this._cursor.measure + endSectionMeasureIndex; ++i) {
+			for (let i = this._cursor.measure; i < this._cursor.measure + measuresToCopy; ++i) {
 				let sourceMeasure = this._measures[parseInt(event.target.dataset.measure) + (i - this._cursor.measure)];
 				if (!this._measures[i]) {
 					// Add one line of measures
 					const index = this._measures.length;
-					for (let i = 0; i < this._measurePerLines; ++i) {
+					for (let j = 0; j < this._measurePerLines; ++j) {
 						const timeSignature = Object.assign({}, this._timeSignature);
-						timeSignature.measureNumber = index + i;
+						timeSignature.measureNumber = index + j;
 						// Then create the first measure, its index refer to its position
 						this._measures.push({
 							subBeats: timeSignature.beat * timeSignature.measure,
@@ -972,40 +975,23 @@ class TabMaker {
 					this._canvas.height += this._tabLineHeight + this._tabLineMargin;
 					this._canvas.style.height = `${parseInt(this._canvas.style.height.slice(0, -2)) + ((this._tabLineHeight + this._tabLineMargin) / this._resolutionFactor)}px`;
 				}
-				copyValues(sourceMeasure.chords, 'chords', 0, sourceMeasure.length, this._measures[i]);
-				copyValues(sourceMeasure.dynamics, 'dynamics', 0, sourceMeasure.length, this._measures[i]);
-				copyValues(sourceMeasure.notes, 'notes', 0, sourceMeasure.length, this._measures[i]);
-				copyValues(sourceMeasure.syllabes, 'syllabes', 0, sourceMeasure.length, this._measures[i]);
+				let length = sourceMeasure.length;
+				if (i + 1 === this._cursor.measure + measuresToCopy) {
+					length = endSectionBeat;
+				}
+
+				copyValues(sourceMeasure.chords, 'chords', 0, length, this._measures[i]);
+				copyValues(sourceMeasure.dynamics, 'dynamics', 0, length, this._measures[i]);
+				copyValues(sourceMeasure.notes, 'notes', 0, length, this._measures[i]);
+				copyValues(sourceMeasure.syllabes, 'syllabes', 0, length, this._measures[i]);
 			}
 			// Finally, we update the last measure before next section
 			sourceMeasure = this._measures[parseInt(event.target.dataset.measure) + endSectionMeasureIndex];
-
-			if (!this._measures[this._cursor.measure + endSectionMeasureIndex]) {
-				// Add one line of measures
-				const index = this._measures.length;
-				for (let i = 0; i < this._measurePerLines; ++i) {
-					const timeSignature = Object.assign({}, this._timeSignature);
-					timeSignature.measureNumber = index + i;
-					// Then create the first measure, its index refer to its position
-					this._measures.push({
-						subBeats: timeSignature.beat * timeSignature.measure,
-						timeSignature: timeSignature,
-						length: this._measureLength,
-						tempo: [],
-						notes: [],
-						dynamics: [],
-						chords: [],
-						sections: [],
-						syllabes: []
-					});
-				}
-				this._canvas.height += this._tabLineHeight + this._tabLineMargin;
-				this._canvas.style.height = `${parseInt(this._canvas.style.height.slice(0, -2)) + ((this._tabLineHeight + this._tabLineMargin) / this._resolutionFactor)}px`;
-			}
-			copyValues(sourceMeasure.chords, 'chords', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
-			copyValues(sourceMeasure.dynamics, 'dynamics', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
-			copyValues(sourceMeasure.notes, 'notes', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
-			copyValues(sourceMeasure.syllabes, 'syllabes', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
+			copyValues(sourceMeasure.chords, 'chords', startSection.beat, endSectionBeat, this._measures[this._cursor.measure + measuresToCopy]);
+			copyValues(sourceMeasure.dynamics, 'dynamics', startSection.beat, endSectionBeat, this._measures[this._cursor.measure + measuresToCopy]);
+			copyValues(sourceMeasure.notes, 'notes', startSection.beat, endSectionBeat, this._measures[this._cursor.measure + measuresToCopy]);
+			copyValues(sourceMeasure.syllabes, 'syllabes', startSection.beat, endSectionBeat, this._measures[this._cursor.measure + measuresToCopy]);
+			console.log(this._measures[this._cursor.measure + measuresToCopy]);
 		}
 
 		this._refreshTab();
