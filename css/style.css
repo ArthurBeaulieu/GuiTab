@@ -309,6 +309,11 @@ div.tab-container {
 	width: calc(100% - 60rem);
 }
 
+canvas.tab-canvas {
+	height: 356px;
+	width: 996px;
+}
+
 /* Sections container */
 
 div.project-section-container {

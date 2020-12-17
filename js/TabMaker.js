@@ -35,16 +35,17 @@ class TabMaker {
 		// Canvas internals
 		this._canvas = document.getElementById('tab-canvas');
 		this._ctx = this._canvas.getContext('2d');
-		// Tab header
-		this._headerHeight = 200;
 		// Tab canvas utils
-		this._lineSpace = 12;
+		this._resolutionFactor = 2;
+		this._lineSpace = 12 * this._resolutionFactor;
 		this._tabLineHeight = 0;
-		this._tabLineMargin = this._lineSpace * 8;
-		this._fontSize = 10;
+		this._tabLineMargin = this._lineSpace * 8
+		this._fontSize = 10 * this._resolutionFactor;
 		this._lineLength = 0;
 		this._measureLength = 0;
 		this._measurePerLines = 0;
+		// Tab header
+		this._headerHeight = 200 * this._resolutionFactor;
 		// User cursor
 		this._cursor = {
 			x: 0,
@@ -89,7 +90,7 @@ class TabMaker {
 		document.getElementById('project-info-aux').innerHTML = `${this._type} tab – ${this._timeSignature.string} – ${this._bpm} BPM`;
 		// Here we compute the amount of sub beat in a measure (dividing a beat in 8 subbeats), with 6 measures in a line
 		this._measureLength = (this._timeSignature.beat * this._timeSignature.measure) * this._lineSpace;
-		while (this._lineLength <= (984 - (2 * this._lineSpace) - this._measureLength)) {
+		while (this._lineLength <= ((984 * this._resolutionFactor) - (2 * this._lineSpace) - this._measureLength)) {
 			++this._measurePerLines;
 			this._lineLength += this._measureLength;
 		}
@@ -99,11 +100,12 @@ class TabMaker {
 			this._strings = ['G', 'D', 'A', 'E'];
 		}
 
-		this._tabLineHeight = ((this._lineCount - 1) * this._lineSpace);
+		this._tabLineHeight = (this._lineCount - 1) * this._lineSpace;
 
 		// Init canvas dimension with one line
 		this._canvas.height = this._headerHeight + this._tabLineHeight + this._tabLineMargin;
 		this._canvas.width = this._lineLength + (3 * this._lineSpace);
+		this._canvas.style.height = `${(this._headerHeight + this._tabLineHeight + this._tabLineMargin) / this._resolutionFactor}px`;
 		// Save in local storage the new project
 		if (this._lsName === '') {
 			this._lsName = `tab-${this._name}-${this._composer}-${Date.now()}`;
@@ -112,6 +114,7 @@ class TabMaker {
 			// Update canvas, height according to the number of measures
 			for (let i = this._measurePerLines; i < this._measures.length; i += this._measurePerLines) {
 				this._canvas.height += this._tabLineHeight + this._tabLineMargin;
+				this._canvas.style.height = `${parseInt(this._canvas.style.height.slice(0, -2)) + ((this._tabLineHeight + this._tabLineMargin) / this._resolutionFactor)}px`;
 			}
 		}
 
@@ -563,7 +566,7 @@ class TabMaker {
 				this._cursor.y -= this._tabLineHeight + this._tabLineMargin;
 			}
 			// Update container scroll according to cursor position
-			document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
+			document.getElementById('tab-container').scrollTo(0, (this._cursor.y / this._resolutionFactor) - (document.getElementById('tab-container').offsetHeight / 2));
 			this._refreshTab();
 		}
 	}
@@ -600,8 +603,6 @@ class TabMaker {
 						this._cursor.beat = 0;
 					}
 				}
-				// Update container scroll according to cursor position
-				document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
 			} else { // New line for cursor
 				++this._cursor.measure;
 				this._cursor.beat = 0;
@@ -610,11 +611,12 @@ class TabMaker {
 				this._cursor.x = this._lineSpace + (this._lineSpace / 2);
 				this._cursor.y += this._tabLineHeight + this._tabLineMargin;
 				// Update container scroll according to cursor position
-				document.getElementById('tab-container').scrollTo(0, this._cursor.y - (document.getElementById('tab-container').offsetHeight / 2));
+				document.getElementById('tab-container').scrollTo(0, (this._cursor.y / this._resolutionFactor) - (document.getElementById('tab-container').offsetHeight / 2));
 				// Determine wether we should add the measures to fill new line
-				if (this._measures.length <= (this._measurePerLines * this._cursor.line)) {
+				if (this._measures.length <= this._measurePerLines * this._cursor.line) {
 					// Resize canvas height to fit new line
 					this._canvas.height += this._tabLineHeight + this._tabLineMargin;
+					this._canvas.style.height = `${parseInt(this._canvas.style.height.slice(0, -2)) + ((this._tabLineHeight + this._tabLineMargin) / this._resolutionFactor)}px`;
 					// Scroll to canvas bottom
 					document.getElementById('tab-container').scrollTo(0, document.getElementById('tab-container').scrollHeight);
 					// Append measures for new line
@@ -967,6 +969,7 @@ class TabMaker {
 						});
 					}
 					this._canvas.height += this._tabLineHeight + this._tabLineMargin;
+					this._canvas.style.height = `${parseInt(this._canvas.style.height.slice(0, -2)) + ((this._tabLineHeight + this._tabLineMargin) / this._resolutionFactor)}px`;
 				}
 				copyValues(sourceMeasure.chords, 'chords', 0, sourceMeasure.length, this._measures[i]);
 				copyValues(sourceMeasure.dynamics, 'dynamics', 0, sourceMeasure.length, this._measures[i]);
@@ -996,6 +999,7 @@ class TabMaker {
 					});
 				}
 				this._canvas.height += this._tabLineHeight + this._tabLineMargin;
+				this._canvas.style.height = `${parseInt(this._canvas.style.height.slice(0, -2)) + ((this._tabLineHeight + this._tabLineMargin) / this._resolutionFactor)}px`;
 			}
 			copyValues(sourceMeasure.chords, 'chords', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
 			copyValues(sourceMeasure.dynamics, 'dynamics', 0, endSectionBeat, this._measures[this._cursor.measure + endSectionMeasureIndex]);
