@@ -257,7 +257,7 @@ class TabMaker {
     this._ctx.textAlign = 'right';
     this._ctx.font = `${this._fontSize * 1.5}px sans-serif`;
     this._ctx.fillText(
-      `${this._type} Guitar`,
+      `${instrumentString} Guitar`,
       this._canvas.width,
       (this._lineSpace * 3) + (this._fontSize * 1.5)
     );
@@ -809,6 +809,7 @@ class TabMaker {
 
 
   _addChord() {
+    this._toggleClickedSvg('add-chord');
     const chordValue = document.getElementById('chord').value;
     if (chordValue !== '') {
       const chord = {
@@ -839,6 +840,7 @@ class TabMaker {
 
 
   _removeChord() {
+    this._toggleClickedSvg('remove-chord');
     for (let i = 0; i < this._measures[this._cursor.measure].chords.length; ++i) {
       if (this._measures[this._cursor.measure].chords[i].beat === this._cursor.beat) {
         this._measures[this._cursor.measure].chords.splice(i, 1);
@@ -850,6 +852,7 @@ class TabMaker {
 
 
   _addSection() {
+    this._toggleClickedSvg('add-section');
     const sectionValue = document.getElementById('section').value;
     if (sectionValue !== '') {
       const section = {
@@ -880,6 +883,7 @@ class TabMaker {
 
 
   _removeSection() {
+    this._toggleClickedSvg('remove-section');
     for (let i = 0; i < this._measures[this._cursor.measure].sections.length; ++i) {
       if (this._measures[this._cursor.measure].sections[i].beat === this._cursor.beat) {
         this._measures[this._cursor.measure].sections.splice(i, 1);
@@ -1086,6 +1090,7 @@ class TabMaker {
 
 
   _addSyllabe() {
+    this._toggleClickedSvg('add-syllabe');
     const syllabeValue = document.getElementById('syllabe').value;
     if (syllabeValue !== '') {
       const syllabe = {
@@ -1116,6 +1121,7 @@ class TabMaker {
 
 
   _removeSyllabe() {
+    this._toggleClickedSvg('remove-syllabe');
     for (let i = 0; i < this._measures[this._cursor.measure].syllabes.length; ++i) {
       if (this._measures[this._cursor.measure].syllabes[i].beat === this._cursor.beat) {
         this._measures[this._cursor.measure].syllabes.splice(i, 1);
@@ -1127,6 +1133,7 @@ class TabMaker {
 
 
   _addTempo() {
+    this._toggleClickedSvg('add-tempo');
     const tempoValue = document.getElementById('tempo').value;
     if (tempoValue !== '') {
       const tempo = {
@@ -1158,6 +1165,7 @@ class TabMaker {
 
 
   _removeTempo() {
+    this._toggleClickedSvg('remove-tempo');
     for (let i = 0; i < this._measures[this._cursor.measure].tempo.length; ++i) {
       if (this._measures[this._cursor.measure].tempo[i].master === false && this._measures[this._cursor.measure].tempo[i].beat === this._cursor.beat) {
         this._measures[this._cursor.measure].tempo.splice(i, 1);
@@ -1169,6 +1177,7 @@ class TabMaker {
 
 
   _addTimeSignature() {
+    this._toggleClickedSvg('add-time-signature');
     const timeSignatureValue = document.getElementById('time-signature').value;
     if (timeSignatureValue !== '') {
       const timeSignature = {
@@ -1192,12 +1201,24 @@ class TabMaker {
 
 
   _removeTimeSignature() {
+    this._toggleClickedSvg('remove-time-signature');
     if (this._measures[this._cursor.measure].timeSignature.master === false) {
       this._measures[this._cursor.measure].timeSignature = this._timeSignature;
       this._refreshTab();
     }
   }
 
+
+  _toggleClickedSvg(id) {
+    for (let i = 0; i < document.getElementById(id).children.length; ++i) {
+      document.getElementById(id).children[i].style.fill = 'red';
+    }
+    setTimeout(() => {
+      for (let i = 0; i < document.getElementById(id).children.length; ++i) {
+        document.getElementById(id).children[i].style.fill = 'white';
+      }
+    }, 200);
+  }
 
 
   _toggleClickedClass(id) {
@@ -1217,14 +1238,14 @@ class TabMaker {
     this._cursor.x = -9000;
     this._refreshTab();
 
-    var imgData = this._canvas.toDataURL('image/png');
-    var pdf = new jsPDF('p', 'mm', 'a4', true);
-    var position = 0;
+    const imgData = this._canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4', true);
+    let position = 0;
 
-    var imgWidth = 200;
-    var pageHeight = 297;
-    var imgHeight = this._canvas.height * imgWidth / this._canvas.width;
-    var heightLeft = imgHeight;
+    const imgWidth = 200;
+    const pageHeight = 297;
+    const imgHeight = this._canvas.height * imgWidth / this._canvas.width;
+    let heightLeft = imgHeight;
 
     pdf.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight, undefined, 'FAST');
     heightLeft -= pageHeight;
@@ -1324,8 +1345,10 @@ class TabMaker {
 
   _toggleClick() {
     if (this._withClick === false) {
+      document.getElementById('toggle-click').firstElementChild.style.fill = 'red';
       this._withClick = true;
     } else {
+      document.getElementById('toggle-click').firstElementChild.style.fill = 'white';
       this._withClick = false;
     }
   }

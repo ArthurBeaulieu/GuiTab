@@ -33,7 +33,6 @@ class GuiTab {
     this._homeButton = document.getElementById('home-button');
     this._aboutButton = document.getElementById('about-button');
 
-
     this._dropElement = new DropElement({
       target: this._dropTabContainer,
       onDrop: this._droppedTab.bind(this)
@@ -42,12 +41,8 @@ class GuiTab {
     Events.addEvent('click', this._dropTabContainer, this._droppedTab, this);
     Events.addEvent('click', this._newProjectButton, this._createNewProject, this);
     Events.addEvent('click', this._homeButton, this._homePage, this);
+    Events.addEvent('click', this._aboutButton, this._aboutModal, this);
 
-    this._fillExistingProjects();
-  }
-
-
-  _fillExistingProjects() {
     this._loadProjectFromLs();
   }
 

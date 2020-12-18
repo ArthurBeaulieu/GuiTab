@@ -19,6 +19,7 @@ nav {
 	width: 100%;
 }
 
+nav svg,
 nav img {
 	cursor: pointer;
 	height: 50%;
@@ -70,6 +71,27 @@ p, a {
 
 nav h1 {
 	padding: 0;
+}
+
+svg path {
+	transition: all .2s ease-out;
+}
+
+nav .view-controls,
+nav .about-controls {
+	align-items: center;
+	display: flex;
+	height: 100%;
+	width: 30rem;
+}
+
+nav .global-controls {
+	height: 100%;
+	width: calc(100% - 60rem);
+}
+
+nav .about-controls {
+	justify-content: flex-end;
 }
 
 /* Homepage */
@@ -248,6 +270,7 @@ div.icons-line .icon {
 	height: 2rem;
 	justify-content: center;
 	margin: 0 .2rem;
+	user-select: none;
 	width: 2rem;
 
 	transition: background .2s;
@@ -272,8 +295,8 @@ div.icons-line .icon.dynamics.right {
 	margin-left: auto;
 }
 
-div.icons-line .icon.dynamics img {
-	padding: .2rem;
+div.icons-line svg.icon.dynamics {
+	padding: .3rem;
 }
 
 div.icons-line p {
@@ -397,7 +420,8 @@ div.playback-controls-wrapper {
 	margin: .6rem 0;
 }
 
-div.playback-controls-wrapper img {
+div.playback-controls-wrapper img,
+div.playback-controls-wrapper svg {
 	cursor: pointer;
 	height: 2rem;
 	margin: 0 .6rem;
