@@ -331,6 +331,12 @@ class Shortcut {
       if (this._singleKey.length === 0 && this._multiKey.length === 0) {
         this._addEvents();
       }
+
+      if (keyString.toLowerCase() === 'space') {
+        keyString = ' ';
+      } else {
+        keyString.replace(' ', '');
+      }
       // New shortcut internals
       const shortcut = {
         keyString: keyString,
@@ -340,7 +346,7 @@ class Shortcut {
           shiftKey: /shift/i.test(keyString)
         },
         modifierCount: this._getModifiersCount(keyString),
-        key: keyString.toLowerCase().replace('ctrl', '').replace('alt', '').replace('maj', '').replace(' ', '').replace('+', ''),
+        key: keyString.toLowerCase().replace('ctrl', '').replace('alt', '').replace('maj', '').replace('+', ''),
         paused: false,
         fire: fire
       };

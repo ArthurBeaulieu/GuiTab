@@ -86,7 +86,6 @@ div.home-container {
 
 div.home-container h2 {
 	color: black;
-	margin-bottom: 2rem;
 }
 
 div.drop-container {
@@ -145,7 +144,7 @@ div.saved-project img.delete {
 }
 
 div.saved-project,
-div.existing-project button {
+div.home-container button {
 	background-color: rgba(0, 0, 0, .1);
 	border: solid 1px black;
 	border-radius: 5px;
@@ -359,7 +358,7 @@ div.section-header h3 {
 }
 
 div.section-list {
-	height: calc(100% - 18rem);
+	height: calc(100% - 19rem);
 	overflow-y: auto;
 }
 
@@ -368,7 +367,7 @@ div.section {
 	color: white;
 	display: flex;
 	font-size: 1.3rem;
-	justify-content: space-between;
+	justify-content: flex-start;
 	margin-bottom: 1rem;
 	padding: 0 1rem;
 }
@@ -376,23 +375,43 @@ div.section {
 div.section img {
 	cursor: pointer;
 	height: 2rem;
-	padding-left: 2rem;
+	padding-left: 1rem;
+}
+
+div.section img:first-of-type {
+	margin-left: auto;
 }
 
 div.playback-control {
 	border-top: solid 1px white;
-	height: 6rem;
+	height: 7rem;
 	margin: 2rem;
 	margin-bottom: 0;
-	padding: 1rem;
+	padding: 1rem 0;
 	text-align: center;
 }
 
-div.playback-control img {
+div.playback-controls-wrapper {
+	display: flex;
+	justify-content: center;
+	margin: .6rem 0;
+}
+
+div.playback-controls-wrapper img {
 	cursor: pointer;
 	height: 2rem;
-	margin: .6rem;
+	margin: 0 .6rem;
 	width: 2rem;
+}
+
+div.playback-controls-wrapper img:first-of-type {
+	margin-left: 0;
+}
+
+div.playback-controls-wrapper select {
+	cursor: pointer;
+	height: 2rem;
+	margin-left: auto;
 }
 
 /* Modal */

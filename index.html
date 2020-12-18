@@ -1,187 +1,219 @@
 <!DOCTYPE html>
-<html>
+<!--  GuiTab – 12/2020                        -->
+<!--  GPL-3.0 License                         -->
+<!--  Arthur Beaulieu (contact@abeaulieu.fr)  -->
+<!--  Version 0.1.6                           -->
+<html lang="en">
 <head>
-	<title>GuiTab – 0.1.5</title>
-	<meta charset="utf-8">
-	<link rel="stylesheet" type="text/css" href="css/style.css">
+  <meta charset="utf-8">
+  <meta content="initial-scale=1" name="viewport">
+  <meta name="description" content="A tab maker for guitar and bass guitar! Serverless for more pleasure! Source code available at https://github.com/ArthurBeaulieu/GuiTab">
+  <title>GuiTab – 0.1.6</title>
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+  <link href="https://raw.githubusercontent.com/ArthurBeaulieu/ArthurBeaulieu/master/img/logo.png" rel="icon" type="image/png">
 </head>
 <body>
-	<nav>
-		<img src="./img/home.svg" id="home-button" alt="home">
-		<h1>GuiTab</h1>
-		<img src="./img/info.svg" id="about-button" alt="about">
-    <a href="https://github.com/ArthurBeaulieu/GuiTab", target="_blank" rel="noreferrer noopener" alt="github-repository"><svg viewBox="0 0 16 16" version="1.1" aria-hidden="true"><path fill="rgb(255, 255, 255)" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg></a>
-	</nav>
-	<main id="page-content">
-		<div id="home-container" class="home-container">
-			<h2>Create a project, or drop an exported tab to load</h2>
-			<div id="drop-container" class="drop-container"></div>
-			<div id="existing-project" class="existing-project">
-				<button id="new-project-button">New project</button>
-			</div>
-		</div>
-		<div id="project-options" class="project-options">
-			<label for="project-name">Project name</label>
-			<input id="project-name" type="text" name="project-name" placeholder="My Project">
-			<label for="project-composer">Composer</label>
-			<input id="project-composer" type="text" name="project-composer" placeholder="Composer">
-			<label for="project-bpm">BPM</label>
-			<input id="project-bpm" type="number" name="project-bpm" placeholder="120">
-			<label for="project-time-signature">Time signature</label>
-			<input id="project-time-signature" type="text" name="project-time-signature" placeholder="4/4">
-			<label for="guitar-type">Instrument</label>
-			<select id="guitar-type" type="text" name="guitar-type">
-				<option value="guitar">Guitar</option>
-				<option value="bass">Bass Guitar</option>
-			</select>
-			<button id="create-project">Create project</button>
-		</div>
-		<div id="project-container" class="project-container">
-			<div class="project-controls-container">
-				<div class="info-wrapper">
-					<div class="main-info">
-						<h3>Tab info</h3>
-						<div class="info-line">
-							<p id="project-info-main">My Project – Composer</p>
-							<p id="project-info-aux">Guitar tab – 4/4 – 120 BPM</p>
-							<p id="cursor-position">Measure 1, Beat 1/1</p>
-						</div>
-						<div class="icons-line">
-							<div id="save-project" class="icon no-border"><img src="./img/save.svg" name="Save project" alt="save-project"></div>
-							<div id="download-project" class="icon no-border"><img src="./img/download.svg" name="Download PDF" alt="download-project"></div>
-							<div id="export-project" class="icon no-border"><img src="./img/export.svg" name="Export project" alt="export-project"></div>
-						</div>
-					</div>
-					<p>The following fields are relative to the cursor</p>
-					<h3>Dynamics</h3>
-					<div id="dynamic-icons" class="icons-line">
-						<div class="icon dynamics" data-value="pp">pp</div>
-						<div class="icon dynamics" data-value="p">p</div>
-						<div class="icon dynamics" data-value="mp">mp</div>
-						<div class="icon dynamics" data-value="mf">mf</div>
-						<div class="icon dynamics" data-value="f">f</div>
-						<div class="icon dynamics" data-value="ff">ff</div>
-						<div class="icon dynamics right" data-value="x"><img src="./img/delete.svg" alt="remove-dynamic"></div>
-					</div>
-					<h3>Chords</h3>
-					<div class="icons-line">
-						<input id="chord" type="text" name="chord-value" value="">
-						<div id="add-chord" class="icon dynamics"><img src="./img/plus.svg" alt="add-chord"></div>
-						<div id="remove-chord" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-chord"></div>
-					</div>
-					<h3>Sections</h3>
-					<div class="icons-line">
-						<input id="section" type="text" name="section-value" value="">
-						<div id="add-section" class="icon dynamics"><img src="./img/plus.svg" alt="add-section"></div>
-						<div id="remove-section" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-section"></div>
-					</div>
-					<h3>Lyric syllabe</h3>
-					<div class="icons-line">
-						<input id="syllabe" type="text" name="syllabe-value" value="">
-						<div id="add-syllabe" class="icon dynamics"><img src="./img/plus.svg" alt="add-syllabe"></div>
-						<div id="remove-syllabe" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-syllabe"></div>
-					</div>
-					<h3>Tempo update</h3>
-					<div class="icons-line">
-						<input id="tempo" type="number" name="tempo-value" value="">
-						<div id="add-tempo" class="icon dynamics"><img src="./img/plus.svg" alt="add-tempo"></div>
-						<div id="remove-tempo" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-tempo"></div>
-					</div>
-					<h3>Time signature</h3>
-					<div class="icons-line">
-						<input id="time-signature" type="text" name="time-signature-value" value="">
-						<div id="add-time-signature" class="icon dynamics"><img src="./img/plus.svg" alt="add-time-signature"></div>
-						<div id="remove-time-signature" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-time-signature"></div>
-					</div>
-				</div>
-				<div>
-					<div class="controls-help">
-						<h3>Moving cursor</h3>
-						<div class="icons-line">
-							<div id="arrow-up" class="icon">↑</div>
-							<div id="arrow-left" class="icon">←</div>
-							<div id="arrow-down" class="icon">↓</div>
-							<div id="arrow-right" class="icon">→</div>
-							<p>or</p>
-							<div id="z-up" class="icon">z</div>
-							<div id="q-left" class="icon">q</div>
-							<div id="s-down" class="icon">s</div>
-							<div id="d-right" class="icon">d</div>
-						</div>
-						<p>Use control to move faster (left and right)</p>
-						<h3>Modifiers</h3>
-						<div class="icons-line left">
-							<div id="h-modifier" class="icon">h</div>
-							<p>Hammer-on</p>
-						</div>
-						<div class="icons-line left">
-							<div id="p-modifier" class="icon">p</div>
-							<p>Pull-off</p>
-						</div>
-						<div class="icons-line left">
-							<div id="b-modifier" class="icon">b</div>
-							<p>Bend</p>
-						</div>
-						<div class="icons-line left">
-							<div id="x-modifier" class="icon">x</div>
-							<p>Muffled</p>
-						</div>
-						<div class="icons-line left">
-							<div id="v-modifier" class="icon">v</div>
-							<p>Vibrato</p>
-						</div>
-						<div class="icons-line left">
-							<div id="/-modifier" class="icon">/</div>
-							<p>Ascending slide</p>
-						</div>
-						<div class="icons-line left">
-							<div id="\-modifier" class="icon">\</div>
-							<p>Descending slide</p>
-						</div>
-					</div>
-					<div class="credits">
-						<p>GuiTab – Version 0.1.5</p>
-						<p>Arthur Beaulieu – 2020</p>
-					</div>
-				</div>
-			</div>
-			<div id="tab-container" class="tab-container">
-				<canvas id="tab-canvas" class="tab-canvas"></canvas>
-			</div>
-			<div class="project-section-container">
-				<div class="section-header">
-					<h3>Tab sections</h3>
-					<p>Create a section using the controls on the left. Use the paste icon to paste the section to the cursors measure. It will erase any symbols on the process.</p>
-				</div>
-				<div id="sections-list" class="section-list">
-				</div>
-				<div class="playback-control">
-					<p>Playback controller</p>
-					<img src="./img/play.svg" id="start-playback" alt="play">
-					<img src="./img/stop.svg" id="stop-playback" alt="stop">
-				</div>
-			</div>
-		</div>
-	</main>
-	<div id="modal-overlay" class="modal-overlay">
-		<div class="modal">
-			<h2>GuiTab – Version 0.1.5</h2><br>
-			<p>Arthur Beaulieu – 2020</p><br><br>
-			<p>All tabs will be saved on this computer. If you want to read them on another one, you need to export your tabs and drag n drop in the destination computer.</p><br><br>
-			<p>This project is open source, so if you think any feature is missing, or if you wish to contribute in any other way to this project, please DM me, or open an issue!</p><br><br>
-			<a href="https://github.com/ArthurBeaulieu/GuiTab" alt="code-repository" target="_blank">Check it on GitHub</a>
-		</div>
-	</div>
-	<script type="text/javascript" src="./js/lib/jsPDF.js"></script>
-	<script type="module">
-		import GuiTab from './js/GuiTab.js';
-		import CustomEvents from './js/lib/CustomEvents.js';
-		import Shortcut from './js/lib/Shortcut.js';
-		window.Events = new CustomEvents();
-		window.Shortcut = new Shortcut({
-			noPrevention: true
-		});
-		window.GuiTab = new GuiTab();
-	</script>
+  <!-- Page header -->
+  <nav>
+    <img src="./img/home.svg" id="home-button" alt="home">
+    <h1>GuiTab</h1>
+    <img src="./img/info.svg" id="about-button" alt="about">
+    <a href="https://github.com/ArthurBeaulieu/GuiTab" target="_blank" rel="noreferrer noopener" name="source-code-repository" alt="github-repository">
+      <svg viewBox="0 0 16 16" version="1.1" aria-hidden="true">
+        <path fill="rgb(255, 255, 255)" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+      </svg>
+    </a>
+  </nav>
+  <!-- Page content -->
+  <main id="page-content">
+    <!-- Home page, with existing project, drop container and new project button -->
+    <div id="home-container" class="home-container">
+      <h2>Create a project, or drop an exported tab to load</h2>
+      <button id="new-project-button">New project</button>
+      <div id="drop-container" class="drop-container"></div>
+      <div id="existing-project" class="existing-project"></div>
+    </div>
+    <!-- New project form to fill tab internal attributes -->
+    <div id="project-options" class="project-options">
+      <label for="project-name">Project name</label>
+      <input id="project-name" type="text" name="project-name" placeholder="My Project">
+      <label for="project-composer">Composer</label>
+      <input id="project-composer" type="text" name="project-composer" placeholder="Composer">
+      <label for="project-bpm">BPM</label>
+      <input id="project-bpm" type="number" name="project-bpm" placeholder="120">
+      <label for="project-time-signature">Time signature</label>
+      <input id="project-time-signature" type="text" name="project-time-signature" placeholder="4/4">
+      <label for="guitar-type">Instrument</label>
+      <select id="guitar-type" type="text" name="guitar-type">
+        <option value="guitar">Guitar</option>
+        <option value="bass">Bass Guitar</option>
+      </select>
+      <button id="create-project">Create project</button>
+    </div>
+    <!-- Tab container with controls -->
+    <div id="project-container" class="project-container">
+      <div class="project-controls-container">
+        <div class="info-wrapper">
+          <div class="main-info">
+            <h3>Tab info</h3>
+            <div class="info-line">
+              <p id="project-info-main">My Project – Composer</p>
+              <p id="project-info-aux">Guitar tab – 4/4 – 120 BPM</p>
+              <p id="cursor-position">Measure 1, Beat 1/1</p>
+            </div>
+            <div class="icons-line">
+              <div id="save-project" class="icon no-border"><img src="./img/save.svg" name="Save project" alt="save-project"></div>
+              <div id="download-project" class="icon no-border"><img src="./img/download.svg" name="Download PDF" alt="download-project"></div>
+              <div id="export-project" class="icon no-border"><img src="./img/export.svg" name="Export project" alt="export-project"></div>
+            </div>
+          </div>
+          <p>The following fields are relative to the cursor</p>
+          <h3>Dynamics</h3>
+          <div id="dynamic-icons" class="icons-line">
+            <div class="icon dynamics" data-value="pp">pp</div>
+            <div class="icon dynamics" data-value="p">p</div>
+            <div class="icon dynamics" data-value="mp">mp</div>
+            <div class="icon dynamics" data-value="mf">mf</div>
+            <div class="icon dynamics" data-value="f">f</div>
+            <div class="icon dynamics" data-value="ff">ff</div>
+            <div class="icon dynamics right" data-value="x"><img src="./img/delete.svg" alt="remove-dynamic"></div>
+          </div>
+          <h3>Chords</h3>
+          <div class="icons-line">
+            <input id="chord" type="text" name="chord-value" value="">
+            <div id="add-chord" class="icon dynamics"><img src="./img/plus.svg" alt="add-chord"></div>
+            <div id="remove-chord" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-chord"></div>
+          </div>
+          <h3>Sections</h3>
+          <div class="icons-line">
+            <input id="section" type="text" name="section-value" value="">
+            <div id="add-section" class="icon dynamics"><img src="./img/plus.svg" alt="add-section"></div>
+            <div id="remove-section" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-section"></div>
+          </div>
+          <h3>Lyric syllabe</h3>
+          <div class="icons-line">
+            <input id="syllabe" type="text" name="syllabe-value" value="">
+            <div id="add-syllabe" class="icon dynamics"><img src="./img/plus.svg" alt="add-syllabe"></div>
+            <div id="remove-syllabe" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-syllabe"></div>
+          </div>
+          <h3>Tempo update</h3>
+          <div class="icons-line">
+            <input id="tempo" type="number" name="tempo-value" value="">
+            <div id="add-tempo" class="icon dynamics"><img src="./img/plus.svg" alt="add-tempo"></div>
+            <div id="remove-tempo" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-tempo"></div>
+          </div>
+          <h3>Time signature</h3>
+          <div class="icons-line">
+            <input id="time-signature" type="text" name="time-signature-value" value="">
+            <div id="add-time-signature" class="icon dynamics"><img src="./img/plus.svg" alt="add-time-signature"></div>
+            <div id="remove-time-signature" class="icon dynamics right"><img src="./img/delete.svg" alt="remove-time-signature"></div>
+          </div>
+        </div>
+        <div>
+          <div class="controls-help">
+            <h3>Moving cursor</h3>
+            <div class="icons-line">
+              <div id="arrow-up" class="icon">↑</div>
+              <div id="arrow-left" class="icon">←</div>
+              <div id="arrow-down" class="icon">↓</div>
+              <div id="arrow-right" class="icon">→</div>
+              <p>or</p>
+              <div id="z-up" class="icon">z</div>
+              <div id="q-left" class="icon">q</div>
+              <div id="s-down" class="icon">s</div>
+              <div id="d-right" class="icon">d</div>
+            </div>
+            <p>Use control to move faster (left and right)</p>
+            <h3>Modifiers</h3>
+            <div class="icons-line left">
+              <div id="h-modifier" class="icon">h</div>
+              <p>Hammer-on</p>
+            </div>
+            <div class="icons-line left">
+              <div id="p-modifier" class="icon">p</div>
+              <p>Pull-off</p>
+            </div>
+            <div class="icons-line left">
+              <div id="b-modifier" class="icon">b</div>
+              <p>Bend</p>
+            </div>
+            <div class="icons-line left">
+              <div id="x-modifier" class="icon">x</div>
+              <p>Muffled</p>
+            </div>
+            <div class="icons-line left">
+              <div id="v-modifier" class="icon">v</div>
+              <p>Vibrato</p>
+            </div>
+            <div class="icons-line left">
+              <div id="/-modifier" class="icon">/</div>
+              <p>Ascending slide</p>
+            </div>
+            <div class="icons-line left">
+              <div id="\-modifier" class="icon">\</div>
+              <p>Descending slide</p>
+            </div>
+          </div>
+          <div class="credits">
+            <p>GuiTab – Version 0.1.6</p>
+            <p>Arthur Beaulieu – 2020</p>
+          </div>
+        </div>
+      </div>
+      <div id="tab-container" class="tab-container">
+        <canvas id="tab-canvas" class="tab-canvas"></canvas>
+      </div>
+      <div class="project-section-container">
+        <div class="section-header">
+          <h3>Tab sections</h3>
+          <p>Create a section using the controls on the left. Use the paste icon to paste the section to the cursors measure. It will erase any symbols on the process.</p>
+        </div>
+        <div id="sections-list" class="section-list">
+        </div>
+        <div class="playback-control">
+          <p>Playback controller</p>
+          <div class="playback-controls-wrapper">
+            <img src="./img/play.svg" id="toggle-playback" alt="toggle-play">
+            <img src="./img/metronome.svg" id="toggle-click" alt="toggle-click">
+            <select id="playback-type" type="text" name="playback-type">
+              <option value="GUITAR">Guitar</option>
+              <option value="GUITAR_TWELVE_STRINGS">Guitar 12 Strings</option>
+              <option value="GUITAR_BRIT_BLUES">Guitar Brit Blues</option>
+              <option value="BASS">Bass</option>
+              <option value="BASS_AMP360">Bass Amp 360</option>
+              <option value="BASS_FUZZ">Bass Fuzz</option>
+              <option value="BASS_SUB_DUB">Bass Sub Dub</option>
+              <option value="ORGAN">Organ</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Modal zone -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+      <h2>GuiTab – Version 0.1.6</h2><br>
+      <p>Arthur Beaulieu – 2020</p><br><br>
+      <p>All tabs will be saved on this computer. If you want to read them on another one, you need to export your tabs and drag n drop in the destination computer.</p><br><br>
+      <p>This project is open source, so if you think any feature is missing, or if you wish to contribute in any other way to this project, please DM me, or open an issue!</p><br><br>
+      <a href="https://github.com/ArthurBeaulieu/GuiTab" target="_blank" rel="noreferrer noopener" name="source-code-repository" alt="github-repository">Check it on GitHub</a>
+    </div>
+  </div>
+  <!-- Scripting zone -->
+  <script type="text/javascript" src="./js/lib/jsPDF.js"></script>
+  <script type="module">
+    // Global scopped objects to be used in classes
+    import GuiTab from './js/GuiTab.js';
+    import CustomEvents from './js/lib/CustomEvents.js';
+    import Shortcut from './js/lib/Shortcut.js';
+    // Instantiate utilities
+    window.Events = new CustomEvents();
+    window.Shortcut = new Shortcut({
+      noPrevention: true
+    });
+    // Start GuiTab script
+    window.GuiTab = new GuiTab();
+  </script>
 </body>
 </html>
