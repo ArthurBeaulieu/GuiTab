@@ -2,7 +2,7 @@
 
 A tab maker for guitar and bass guitar! Serverless for more pleasure!
 
-Check the [live demo](arthurbeaulieu.github.io/guitab/)!
+Check the [live demo](https://arthurbeaulieu.github.io/guitab/)!
 
 <p>
   <img src="/img/demo.png" width="960" alt="guitab-demo"/>
