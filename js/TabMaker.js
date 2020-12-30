@@ -39,7 +39,7 @@ class TabMaker {
     this._resolutionFactor = 2;
     this._lineSpace = 12 * this._resolutionFactor;
     this._tabLineHeight = 0;
-    this._tabLineMargin = this._lineSpace * 8
+    this._tabLineMargin = this._lineSpace * 8;
     this._fontSize = 10 * this._resolutionFactor;
     this._lineLength = 0;
     this._measureLength = 0;
@@ -95,10 +95,10 @@ class TabMaker {
     document.getElementById('project-info-main').innerHTML = `${this._name} – ${this._composer}`;
     document.getElementById('project-info-aux').innerHTML = `${this._type} tab – ${this._timeSignature.string} – ${this._bpm} BPM`;
     // Here we compute the amount of sub beat in a measure (dividing a beat in 8 subbeats), with 6 measures in a line
-    this._measureLength = (this._timeSignature.beat * this._timeSignature.measure) * this._lineSpace;
-    while (this._lineLength <= ((984 * this._resolutionFactor) - (2 * this._lineSpace) - this._measureLength)) {
+    this._measureLength = (this._timeSignature.beat * this._timeSignature.measure);
+    while (this._lineLength <= ((984 * this._resolutionFactor) - (2 * this._lineSpace) - (this._measureLength * this._lineSpace))) {
       ++this._measurePerLines;
-      this._lineLength += this._measureLength;
+      this._lineLength += this._measureLength * this._lineSpace;
     }
 
     if (this._type === 'Bass') {
@@ -288,7 +288,7 @@ class TabMaker {
     // Compute offset according to line previous measures length
     let measureOffset = 0;
     for (let i = lineNumber * this._measurePerLines; i < lineNumber * this._measurePerLines + measureNumber; ++i) {
-      measureOffset += this._measures[i].length;
+      measureOffset += this._measures[i].length * this._lineSpace;
     }
     // Draw sub beat bars for current measure
     for (let i = 0; i < measure.subBeats; i += measure.timeSignature.beat) {
@@ -325,7 +325,7 @@ class TabMaker {
     for (let i = 0; i < measure.tempo.length; ++i) {
       // BPM indication
       this._quarterNote(
-        (this._lineSpace * 2) + (measure.tempo[i].beat * this._lineSpace) + (measureNumber * measure.length),
+        (this._lineSpace * 2) + (measure.tempo[i].beat * this._lineSpace) + (measureNumber * measure.length * this._lineSpace),
         yOffset - (this._tabLineMargin / 2) + (36 / 2),
         6,
         36
@@ -333,7 +333,7 @@ class TabMaker {
       this._ctx.font = `${this._fontSize}px sans-serif`;
       this._ctx.fillText(
         `= ${measure.tempo[i].value}`,
-        (this._lineSpace * 2) + (measure.tempo[i].beat * this._lineSpace) + (measureNumber * measure.length) + (6 * 2),
+        (this._lineSpace * 2) + (measure.tempo[i].beat * this._lineSpace) + (measureNumber * measure.length * this._lineSpace) + (6 * 2),
         yOffset - (this._tabLineMargin / 2) + (36 / 2)
       );
     }
@@ -351,7 +351,7 @@ class TabMaker {
         // Write the line associated string
         this._ctx.fillText(
           measure.notes[i].value,
-          (this._lineSpace * 2) + (measure.notes[i].beat * this._lineSpace) + (measureNumber * measure.length) - align,
+          (this._lineSpace * 2) + (measure.notes[i].beat * this._lineSpace) + (measureNumber * (measure.length * this._lineSpace)) - align,
           yOffset + ((measure.notes[i].string - 1) * this._lineSpace),
           this._lineSpace,
           this._lineSpace
@@ -364,7 +364,7 @@ class TabMaker {
       for (let i = 0; i < measure.dynamics.length; ++i) {
         this._ctx.fillText(
           measure.dynamics[i].value,
-          (this._lineSpace * 2) + (measure.dynamics[i].beat * this._lineSpace) + (measureNumber * measure.length),
+          (this._lineSpace * 2) + (measure.dynamics[i].beat * this._lineSpace) + (measureNumber * (measure.length * this._lineSpace)),
           yOffset + ((this._lineCount - 1) * this._lineSpace) + (this._lineSpace)
         );
       }
@@ -377,7 +377,7 @@ class TabMaker {
       for (let i = 0; i < measure.chords.length; ++i) {
         this._ctx.fillText(
           measure.chords[i].value,
-          (this._lineSpace * 2) + (measure.chords[i].beat * this._lineSpace) + (measureNumber * measure.length),
+          (this._lineSpace * 2) + (measure.chords[i].beat * this._lineSpace) + (measureNumber * (measure.length * this._lineSpace)),
           yOffset - (this._lineSpace / 2)
         );
       }
@@ -390,7 +390,7 @@ class TabMaker {
       for (let i = 0; i < measure.sections.length; ++i) {
         this._ctx.fillText(
           measure.sections[i].value,
-          (this._lineSpace * 2) + (measure.sections[i].beat * this._lineSpace) + (measureNumber * measure.length),
+          (this._lineSpace * 2) + (measure.sections[i].beat * this._lineSpace) + (measureNumber * (measure.length * this._lineSpace)),
           yOffset - ((5 * this._lineSpace) / 3)
         );
       }
@@ -402,7 +402,7 @@ class TabMaker {
       for (let i = 0; i < measure.syllabes.length; ++i) {
         this._ctx.fillText(
           measure.syllabes[i].value,
-          (this._lineSpace * 2) + (measure.syllabes[i].beat * this._lineSpace) + (measureNumber * measure.length),
+          (this._lineSpace * 2) + (measure.syllabes[i].beat * this._lineSpace) + (measureNumber * (measure.length * this._lineSpace)),
           yOffset + ((this._lineCount - 1) * this._lineSpace) + (this._tabLineMargin / 3)
         );
       }
@@ -417,7 +417,7 @@ class TabMaker {
     // Compute line length according to line its measures length
     let lineLength = 0;
     for (let i = lineNumber * this._measurePerLines; i < lineNumber * this._measurePerLines + this._measurePerLines; ++i) {
-      lineLength += this._measures[i].length;
+      lineLength += this._measures[i].length * this._lineSpace;
     }
     // Start line drawing
     this._ctx.beginPath();
@@ -585,7 +585,7 @@ class TabMaker {
         // Compute offset according to line previous measures length
         let lineLength = 0;
         for (let i = this._cursor.line * this._measurePerLines; i < this._cursor.line * this._measurePerLines + this._measurePerLines; ++i) {
-          lineLength += this._measures[i].length;
+          lineLength += this._measures[i].length * this._lineSpace;
         }
 
         if (ctrlModifier === 1) {
@@ -620,7 +620,7 @@ class TabMaker {
       // Compute offset according to line previous measures length
       let lineLength = 0;
       for (let i = this._cursor.line * this._measurePerLines; i < this._cursor.line * this._measurePerLines + this._measurePerLines; ++i) {
-        lineLength += this._measures[i].length;
+        lineLength += this._measures[i].length * this._lineSpace;
       }
 
       if (this._cursor.x + (this._lineSpace * ctrlModifier) <= (lineLength   + (this._lineSpace / 2))) {
@@ -988,10 +988,10 @@ class TabMaker {
       // Update target measures
       // First we update with the measure that contains the section start
       let sourceMeasure = this._measures[parseInt(event.target.dataset.measure)];
-      copyValues(sourceMeasure.chords, 'chords', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
-      copyValues(sourceMeasure.dynamics, 'dynamics', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
-      copyValues(sourceMeasure.notes, 'notes', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
-      copyValues(sourceMeasure.syllabes, 'syllabes', startSection.beat, sourceMeasure.length, this._measures[this._cursor.measure]);
+      copyValues(sourceMeasure.chords, 'chords', startSection.beat, sourceMeasure.length * this._lineSpace, this._measures[this._cursor.measure]);
+      copyValues(sourceMeasure.dynamics, 'dynamics', startSection.beat, sourceMeasure.length * this._lineSpace, this._measures[this._cursor.measure]);
+      copyValues(sourceMeasure.notes, 'notes', startSection.beat, sourceMeasure.length * this._lineSpace, this._measures[this._cursor.measure]);
+      copyValues(sourceMeasure.syllabes, 'syllabes', startSection.beat, sourceMeasure.length * this._lineSpace, this._measures[this._cursor.measure]);
       // Then we iterate the following measures until we reach the endSectionMeasureIndex
       for (let i = this._cursor.measure; i < this._cursor.measure + measuresToCopy; ++i) {
         let sourceMeasure = this._measures[parseInt(event.target.dataset.measure) + (i - this._cursor.measure)];
@@ -1017,7 +1017,7 @@ class TabMaker {
           this._canvas.height += this._tabLineHeight + this._tabLineMargin;
           this._canvas.style.height = `${parseInt(this._canvas.style.height.slice(0, -2)) + ((this._tabLineHeight + this._tabLineMargin) / this._resolutionFactor)}px`;
         }
-        let length = sourceMeasure.length;
+        let length = sourceMeasure.length * this._lineSpace;
         if (i + 1 === this._cursor.measure + measuresToCopy) {
           length = endSectionBeat;
         }
@@ -1192,7 +1192,7 @@ class TabMaker {
       if (JSON.stringify(savedTimeSignature) !== JSON.stringify(timeSignature)) {
         this._measures[this._cursor.measure].timeSignature = timeSignature;
         this._measures[this._cursor.measure].subBeats = timeSignature.beat * timeSignature.measure;
-        this._measures[this._cursor.measure].length = (timeSignature.beat * timeSignature.measure) * this._lineSpace;
+        this._measures[this._cursor.measure].length = (timeSignature.beat * timeSignature.measure);
       }
 
       this._refreshTab();
@@ -1236,7 +1236,19 @@ class TabMaker {
     // Store cursor x pos
     const xPos = this._cursor.x;
     this._cursor.x = -9000;
-    this._refreshTab();
+
+    const resFactor = this._resolutionFactor;
+    this._resolutionFactor = 3;
+    this._lineSpace = 12 * this._resolutionFactor;
+    this._tabLineMargin = this._lineSpace * 8;
+    this._fontSize = 10 * this._resolutionFactor;
+    this._headerHeight = 150 * this._resolutionFactor;
+    this._tabLineHeight = 0;
+    this._lineLength = 0;
+    this._measureLength = 0;
+    this._measurePerLines = 0;
+
+    this._init();
 
     const imgData = this._canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4', true);
@@ -1259,9 +1271,19 @@ class TabMaker {
 
     pdf.save(`${this._composer} - ${this._name}.pdf`);
 
-    // Restore cursor x pos
+    // Restore cursor x pos and resolution factor then refresh tab
     this._cursor.x = xPos;
-    this._refreshTab();
+    this._resolutionFactor = resFactor;
+    this._lineSpace = 12 * this._resolutionFactor;
+    this._tabLineMargin = this._lineSpace * 8;
+    this._fontSize = 10 * this._resolutionFactor;
+    this._headerHeight = 150 * this._resolutionFactor;
+    this._tabLineHeight = 0;
+    this._lineLength = 0;
+    this._measureLength = 0;
+    this._measurePerLines = 0;
+
+    this._init();
   }
 
 
