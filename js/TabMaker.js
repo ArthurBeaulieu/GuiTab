@@ -216,11 +216,11 @@ class TabMaker {
   }
 
 
-  _refreshTab() {
+  _refreshTab(toPrint = false) {
     this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
     this._ctx.translate(0.5, 0.5); // AA enable
     this._drawHeader();
-    this._drawTabMeasures();
+    this._drawTabMeasures(toPrint);
     this._drawCursor();
     this._updateSectionList();
     this._ctx.translate(-0.5, -0.5); // AA restore
@@ -266,29 +266,43 @@ class TabMaker {
   }
 
 
-  _drawTabMeasures() {
+  _drawTabMeasures(toPrint) {
     let lineNumber = 0;
     for (let measureNumber = 0; measureNumber < this._measures.length; ++measureNumber) {
       // Append a new line
       if (measureNumber % this._measurePerLines === 0) {
-        this._drawTabLine(lineNumber);
+        this._drawTabLine(lineNumber, toPrint);
         ++lineNumber;
       }
       // measure count module measure per line to properly position measure in line
       // line number minus 1 for generic use, because j is alway line + 1
       const drawPlaybackCursor = (this._playbackCursor.visible === true && measureNumber === this._playbackCursor.measure);
-      this._drawMeasure(this._measures[measureNumber], measureNumber % this._measurePerLines, (lineNumber - 1), drawPlaybackCursor);
+      this._drawMeasure(this._measures[measureNumber], measureNumber % this._measurePerLines, (lineNumber - 1), drawPlaybackCursor, toPrint);
     }
   }
 
 
-  _drawMeasure(measure, measureNumber, lineNumber, drawPlaybackCursor) {
-    const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
+  _drawMeasure(measure, measureNumber, lineNumber, drawPlaybackCursor, toPrint) {
+    let yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
     this._ctx.strokeStyle = this._colors.subBar;
     // Compute offset according to line previous measures length
     let measureOffset = 0;
     for (let i = lineNumber * this._measurePerLines; i < lineNumber * this._measurePerLines + measureNumber; ++i) {
       measureOffset += this._measures[i].length * this._lineSpace;
+    }
+    // Only when saving pdf, we add an offset to avoid line to be between pages
+    if (toPrint === true) {
+      let lineNumberCopy = lineNumber;
+
+      if (lineNumberCopy === 10) {
+        yOffset += 100;
+        lineNumberCopy -= 10;
+      }
+
+      while ((lineNumberCopy + 1) - 11 >= 0) {
+        yOffset += 50;
+        lineNumberCopy -= 11;
+      }
     }
     // Draw sub beat bars for current measure
     for (let i = 0; i < measure.subBeats; i += measure.timeSignature.beat) {
@@ -411,13 +425,27 @@ class TabMaker {
   }
 
 
-  _drawTabLine(lineNumber) {
+  _drawTabLine(lineNumber, toPrint) {
     // The y offset depends on the line number, spaced in top/bottom with 3 lines space
-    const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
+    let yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
     // Compute line length according to line its measures length
     let lineLength = 0;
     for (let i = lineNumber * this._measurePerLines; i < lineNumber * this._measurePerLines + this._measurePerLines; ++i) {
       lineLength += this._measures[i].length * this._lineSpace;
+    }
+    // Only when saving pdf, we add an offset to avoid line to be between pages
+    if (toPrint === true) {
+      let lineNumberCopy = lineNumber;
+
+      if (lineNumberCopy === 10) {
+        yOffset += 100;
+        lineNumberCopy -= 10;
+      }
+
+      while ((lineNumberCopy + 1) - 11 >= 0) {
+        yOffset += 50;
+        lineNumberCopy -= 11;
+      }
     }
     // Start line drawing
     this._ctx.beginPath();
@@ -1238,7 +1266,7 @@ class TabMaker {
     this._cursor.x = -9000;
 
     const resFactor = this._resolutionFactor;
-    this._resolutionFactor = 3;
+    this._resolutionFactor = 2;
     this._lineSpace = 12 * this._resolutionFactor;
     this._tabLineMargin = this._lineSpace * 8;
     this._fontSize = 10 * this._resolutionFactor;
@@ -1249,6 +1277,7 @@ class TabMaker {
     this._measurePerLines = 0;
 
     this._init();
+    this._refreshTab(true);
 
     const imgData = this._canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4', true);
