@@ -1,7 +1,7 @@
 # GuiTab
 
 ![](https://badgen.net/badge/version/0.1.6/blue)
-[![License](https://img.shields.io/github/license/ArthurBeaulieu/GuitTab.svg)](https://github.com/ArthurBeaulieu/GuitTab/blob/master/LICENSE.md)
+[![License](https://img.shields.io/github/license/ArthurBeaulieu/GuiTab.svg)](https://github.com/ArthurBeaulieu/GuitTab/blob/master/LICENSE.md)
 
 A tab maker for guitar and bass guitar! Serverless for more pleasure!
 
