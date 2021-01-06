@@ -69,10 +69,7 @@ class GuiTab {
     while (count--) {
       // Only load guitab items
       if (keys[count].indexOf('guitab') !== -1) {
-        ls.push({
-          name: keys[count],
-          value: lsObject[keys[count]]
-        });
+        ls.push(keys[count]);
       }
     }
 
@@ -85,10 +82,9 @@ class GuiTab {
         const deleteIcon = document.createElement('IMG');
 
         project.classList.add('saved-project');
-        project.dataset.key = ls[i].name;
-        project.dataset.value = ls[i].value;
-        title.innerHTML = ls[i].name.split('-')[1];
-        composer.innerHTML = ls[i].name.split('-')[2];
+        project.dataset.key = ls[i];
+        title.innerHTML = ls[i].split('-')[1];
+        composer.innerHTML = ls[i].split('-')[2];
         icon.src = './img/guitar.svg';
         deleteIcon.src = './img/delete.svg';
         deleteIcon.classList.add('delete');
@@ -177,7 +173,7 @@ class GuiTab {
   _createExistingProject(event) {
     this._homeContainer.style.display = 'none';
     this._projectContainer.style.display = 'flex';
-    const item = JSON.parse(event.currentTarget.dataset.value);
+    const item = JSON.parse(window.localStorage.getItem(event.currentTarget.dataset.key));
 
     if (this._tab !== null) {
       this._tab.destroy();
