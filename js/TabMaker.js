@@ -90,11 +90,11 @@ class TabMaker {
   }
 
 
-  _init() {
+  _init(toPrint = false) {
     // Update UI with project info
     document.getElementById('project-info-main').innerHTML = `${this._name} – ${this._composer}`;
     document.getElementById('project-info-aux').innerHTML = `${this._type} tab – ${this._timeSignature.string} – ${this._bpm} BPM`;
-    // Here we compute the amount of sub beat in a measure (dividing a beat in 8 subbeats), with 6 measures in a line
+    // Here we compute the amount of sub beat in a measure (dividing a beat in 8 sub-beats), with 5x 4/4 measures in a line
     this._measureLength = (this._timeSignature.beat * this._timeSignature.measure);
     while (this._lineLength <= ((984 * this._resolutionFactor) - (2 * this._lineSpace) - (this._measureLength * this._lineSpace))) {
       ++this._measurePerLines;
@@ -124,7 +124,31 @@ class TabMaker {
       }
     }
 
-    this._initTab();
+    if (toPrint) {
+      let lineNumber = 0;
+      for (let measureNumber = 0; measureNumber < this._measures.length; ++measureNumber) {
+        // Append a new line
+        if (measureNumber % this._measurePerLines === 0) {
+          if (this._type === 'Guitar') {
+            if (measureNumber === 8) {
+              this._canvas.height += 260;
+            } else if (lineNumber % 9 === 0) {
+              this._canvas.height += 150;
+            }
+          } else if (this._type === 'Bass') {
+            if (measureNumber === 10) {
+              this._canvas.height += 80;
+            } else if (lineNumber % 11 === 0) {
+              this._canvas.height += 60;
+            }
+
+          }
+          ++lineNumber;
+        }
+      }
+    }
+
+    this._initTab(toPrint);
   }
 
 
@@ -158,9 +182,9 @@ class TabMaker {
     // Section events
     this._evtIds.push(Events.addEvent('click', document.getElementById('add-section'), this._addSection, this));
     this._evtIds.push(Events.addEvent('click', document.getElementById('remove-section'), this._removeSection, this));
-    // Syllabe events
-    this._evtIds.push(Events.addEvent('click', document.getElementById('add-syllabe'), this._addSyllabe, this));
-    this._evtIds.push(Events.addEvent('click', document.getElementById('remove-syllabe'), this._removeSyllabe, this));
+    // Syllable events
+    this._evtIds.push(Events.addEvent('click', document.getElementById('add-syllable'), this._addSyllable, this));
+    this._evtIds.push(Events.addEvent('click', document.getElementById('remove-syllable'), this._removeSyllable, this));
     // Tempo events
     this._evtIds.push(Events.addEvent('click', document.getElementById('add-tempo'), this._addTempo, this));
     this._evtIds.push(Events.addEvent('click', document.getElementById('remove-tempo'), this._removeTempo, this));
@@ -175,56 +199,58 @@ class TabMaker {
   }
 
 
-  _initTab() {
-    // Init cursor position to first beat, first sub beat on lowest instrument string
-    this._cursor = {
-      x: this._lineSpace + (this._lineSpace / 2),
-      y: this._headerHeight + this._tabLineHeight + (this._tabLineMargin / 2) - (this._lineSpace / 2),
-      measure: 0,
-      beat: 0,
-      line: 0,
-      string: this._strings.length
-    };
-    // Fill first line with
-    if (this._measures.length === 0) {
-      for (let i = 0; i < this._measurePerLines; ++i) {
-        const timeSignature = Object.assign({}, this._timeSignature);
-        timeSignature.measureNumber = i;
-        // Then create the first measure, its index refer to its position
-        this._measures.push({
-          subBeats: timeSignature.beat * timeSignature.measure,
-          timeSignature: timeSignature,
-          length: this._measureLength,
-          tempo: [],
-          notes: [],
-          dynamics: [],
-          chords: [],
-          sections: [],
-          syllabes: []
+  _initTab(toPrint) {
+    if (!toPrint) {
+      // Init cursor position to first beat, first sub beat on lowest instrument string
+      this._cursor = {
+        x: this._lineSpace + (this._lineSpace / 2),
+        y: this._headerHeight + this._tabLineHeight + (this._tabLineMargin / 2) - (this._lineSpace / 2),
+        measure: 0,
+        beat: 0,
+        line: 0,
+        string: this._strings.length
+      };
+      // Fill first line with
+      if (this._measures.length === 0) {
+        for (let i = 0; i < this._measurePerLines; ++i) {
+          const timeSignature = Object.assign({}, this._timeSignature);
+          timeSignature.measureNumber = i;
+          // Then create the first measure, its index refer to its position
+          this._measures.push({
+            subBeats: timeSignature.beat * timeSignature.measure,
+            timeSignature: timeSignature,
+            length: this._measureLength,
+            tempo: [],
+            notes: [],
+            dynamics: [],
+            chords: [],
+            sections: [],
+            syllables: []
+          });
+        }
+
+        this._measures[0].tempo.push({
+          master: true, // Master tempo can't be removed
+          beat: 0,
+          value: this._bpm
         });
       }
-
-      this._measures[0].tempo.push({
-        master: true, // Master tempo can't be removed
-        beat: 0,
-        value: this._bpm
-      });
     }
 
     this._ctx.imageSmoothingEnabled = true;
-    this._refreshTab();
+    this._refreshTab(toPrint);
   }
 
 
-  _refreshTab() {
+  _refreshTab(toPrint = false) {
     this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
     this._ctx.translate(0.5, 0.5); // AA enable
     this._drawHeader();
-    this._drawTabMeasures();
+    this._drawTabMeasures(toPrint);
     this._drawCursor();
     this._updateSectionList();
     this._ctx.translate(-0.5, -0.5); // AA restore
-    // Update local storae value each redraw to store any new data
+    // Update local storage value each redraw to store any new data
     window.localStorage.setItem(this._lsName, JSON.stringify({
       info: {
         name: this._name,
@@ -266,29 +292,73 @@ class TabMaker {
   }
 
 
-  _drawTabMeasures() {
+  _drawTabMeasures(toPrint) {
     let lineNumber = 0;
     for (let measureNumber = 0; measureNumber < this._measures.length; ++measureNumber) {
       // Append a new line
       if (measureNumber % this._measurePerLines === 0) {
-        this._drawTabLine(lineNumber);
+        this._drawTabLine(lineNumber, toPrint);
         ++lineNumber;
       }
       // measure count module measure per line to properly position measure in line
-      // line number minus 1 for generic use, because j is alway line + 1
+      // line number minus 1 for generic use, because j is always line + 1
       const drawPlaybackCursor = (this._playbackCursor.visible === true && measureNumber === this._playbackCursor.measure);
-      this._drawMeasure(this._measures[measureNumber], measureNumber % this._measurePerLines, (lineNumber - 1), drawPlaybackCursor);
+      this._drawMeasure(this._measures[measureNumber], measureNumber % this._measurePerLines, (lineNumber - 1), drawPlaybackCursor, toPrint);
     }
   }
 
 
-  _drawMeasure(measure, measureNumber, lineNumber, drawPlaybackCursor) {
-    const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
+  _drawTabLine(lineNumber, toPrint) {
+    // The y offset depends on the line number, spaced in top/bottom with 3 lines space
+    let yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
+    // Compute line length according to line its measures length
+    let lineLength = 0;
+    for (let i = lineNumber * this._measurePerLines; i < lineNumber * this._measurePerLines + this._measurePerLines; ++i) {
+      lineLength += this._measures[i].length * this._lineSpace;
+    }
+    // Only when saving pdf, we add an offset to avoid line to be between pages
+    if (toPrint === true) {
+      yOffset = this._printingPageOffset(yOffset, lineNumber);
+    }
+    // Start line drawing
+    this._ctx.beginPath();
+    this._ctx.fillStyle = this._colors.text;
+    this._ctx.strokeStyle = this._colors.bar;
+    this._ctx.font = `${this._fontSize}px sans-serif`;
+    // Draw line first vertical bar
+    this._ctx.moveTo(this._lineSpace * 2, yOffset);
+    this._ctx.lineTo(this._lineSpace * 2, yOffset + ((this._lineCount - 1) * this._lineSpace));
+    this._ctx.stroke();
+    // Iterate over the amount of string for given instrument type
+    for (let i = 0; i < this._lineCount; ++i) {
+      // Write the line associated string
+      this._ctx.fillText(this._strings[i], 0, yOffset + (i * this._lineSpace));
+      // Draw horizontal line
+      this._ctx.moveTo((this._lineSpace * 2), yOffset + (i * this._lineSpace));
+      this._ctx.lineTo(lineLength + (this._lineSpace * 2), yOffset + (i * this._lineSpace));
+      this._ctx.stroke();
+    }
+    // Draw line final vertical bar
+    this._ctx.moveTo(lineLength + (this._lineSpace * 2), yOffset);
+    this._ctx.lineTo(lineLength + (this._lineSpace * 2), yOffset + ((this._lineCount - 1) * this._lineSpace));
+    this._ctx.fillText((this._measurePerLines * lineNumber) + 1, 0, yOffset - (this._fontSize * 2));
+    this._ctx.stroke();
+    // End line drawing
+    this._ctx.closePath();
+  }
+
+
+  _drawMeasure(measure, measureNumber, lineNumber, drawPlaybackCursor, toPrint) {
+    let yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
     this._ctx.strokeStyle = this._colors.subBar;
     // Compute offset according to line previous measures length
     let measureOffset = 0;
     for (let i = lineNumber * this._measurePerLines; i < lineNumber * this._measurePerLines + measureNumber; ++i) {
       measureOffset += this._measures[i].length * this._lineSpace;
+    }
+    // Only when saving pdf, we add an offset to avoid line to be between pages
+    if (toPrint === true) {
+      yOffset = this._printingPageOffset(yOffset, lineNumber);
     }
     // Draw sub beat bars for current measure
     for (let i = 0; i < measure.subBeats; i += measure.timeSignature.beat) {
@@ -396,54 +466,18 @@ class TabMaker {
       }
       this._ctx.font = `bold ${this._fontSize}px sans-serif`;
     }
-    // Draw syllabes if any
-    if (measure.syllabes.length > 0) {
+    // Draw syllables if any
+    if (measure.syllables.length > 0) {
       this._ctx.font = `italic ${this._fontSize}px sans-serif`;
-      for (let i = 0; i < measure.syllabes.length; ++i) {
+      for (let i = 0; i < measure.syllables.length; ++i) {
         this._ctx.fillText(
-          measure.syllabes[i].value,
-          (this._lineSpace * 2) + (measure.syllabes[i].beat * this._lineSpace) + (measureNumber * (measure.length * this._lineSpace)),
+          measure.syllables[i].value,
+          (this._lineSpace * 2) + (measure.syllables[i].beat * this._lineSpace) + (measureNumber * (measure.length * this._lineSpace)),
           yOffset + ((this._lineCount - 1) * this._lineSpace) + (this._tabLineMargin / 3)
         );
       }
       this._ctx.font = `bold ${this._fontSize}px sans-serif`;
     }
-  }
-
-
-  _drawTabLine(lineNumber) {
-    // The y offset depends on the line number, spaced in top/bottom with 3 lines space
-    const yOffset = this._headerHeight + (this._tabLineMargin / 2) + (lineNumber * (this._tabLineHeight + this._tabLineMargin));
-    // Compute line length according to line its measures length
-    let lineLength = 0;
-    for (let i = lineNumber * this._measurePerLines; i < lineNumber * this._measurePerLines + this._measurePerLines; ++i) {
-      lineLength += this._measures[i].length * this._lineSpace;
-    }
-    // Start line drawing
-    this._ctx.beginPath();
-    this._ctx.fillStyle = this._colors.text;
-    this._ctx.strokeStyle = this._colors.bar;
-    this._ctx.font = `${this._fontSize}px sans-serif`;
-    // Draw line first vertical bar
-    this._ctx.moveTo(this._lineSpace * 2, yOffset);
-    this._ctx.lineTo(this._lineSpace * 2, yOffset + ((this._lineCount - 1) * this._lineSpace));
-    this._ctx.stroke();
-    // Iterate over the amount of string for given instrument type
-    for (let i = 0; i < this._lineCount; ++i) {
-      // Write the line associated string
-      this._ctx.fillText(this._strings[i], 0, yOffset + (i * this._lineSpace));
-      // Draw horizontal line
-      this._ctx.moveTo((this._lineSpace * 2), yOffset + (i * this._lineSpace));
-      this._ctx.lineTo(lineLength + (this._lineSpace * 2), yOffset + (i * this._lineSpace));
-      this._ctx.stroke();
-    }
-    // Draw line final vertical bar
-    this._ctx.moveTo(lineLength + (this._lineSpace * 2), yOffset);
-    this._ctx.lineTo(lineLength + (this._lineSpace * 2), yOffset + ((this._lineCount - 1) * this._lineSpace));
-    this._ctx.fillText((this._measurePerLines * lineNumber) + 1, 0, yOffset - (this._fontSize * 2));
-    this._ctx.stroke();
-    // End line drawing
-    this._ctx.closePath();
   }
 
 
@@ -504,16 +538,12 @@ class TabMaker {
     const inputActive = [
       document.getElementById('chord'),
       document.getElementById('section'),
-      document.getElementById('syllabe'),
+      document.getElementById('syllable'),
       document.getElementById('tempo'),
       document.getElementById('time-signature')
     ];
 
-    if (inputActive.indexOf(document.activeElement) !== -1) {
-      return true;
-    }
-
-    return false;
+    return (inputActive.indexOf(document.activeElement) !== -1);
   }
 
 
@@ -669,7 +699,7 @@ class TabMaker {
               dynamics: [],
               chords: [],
               sections: [],
-              syllabes: []
+              syllables: []
             });
           }
         }
@@ -737,12 +767,12 @@ class TabMaker {
         document.getElementById('section').value = savedSection.value;
       }
     }
-    // Update UI feedback for existing syllabe on current beat
-    document.getElementById('syllabe').value = '';
-    for (let i = 0; i < this._measures[this._cursor.measure].syllabes.length; ++i) {
-      const savedSyllabe = this._measures[this._cursor.measure].syllabes[i];
-      if (savedSyllabe.beat === this._cursor.beat) {
-        document.getElementById('syllabe').value = savedSyllabe.value;
+    // Update UI feedback for existing syllable on current beat
+    document.getElementById('syllable').value = '';
+    for (let i = 0; i < this._measures[this._cursor.measure].syllables.length; ++i) {
+      const savedSyllable = this._measures[this._cursor.measure].syllables[i];
+      if (savedSyllable.beat === this._cursor.beat) {
+        document.getElementById('syllable').value = savedSyllable.value;
       }
     }
     // Update UI feedback for existing tempo on current beat
@@ -963,7 +993,7 @@ class TabMaker {
       copyValues(sourceMeasure.chords, 'chords');
       copyValues(sourceMeasure.dynamics, 'dynamics');
       copyValues(sourceMeasure.notes, 'notes');
-      copyValues(sourceMeasure.syllabes, 'syllabes');
+      copyValues(sourceMeasure.syllables, 'syllables');
     } else {
       // Clear target measure beat that contains item in interval
       const clearValues = (key, start, end, measure) => {
@@ -991,7 +1021,7 @@ class TabMaker {
       copyValues(sourceMeasure.chords, 'chords', startSection.beat, sourceMeasure.length * this._lineSpace, this._measures[this._cursor.measure]);
       copyValues(sourceMeasure.dynamics, 'dynamics', startSection.beat, sourceMeasure.length * this._lineSpace, this._measures[this._cursor.measure]);
       copyValues(sourceMeasure.notes, 'notes', startSection.beat, sourceMeasure.length * this._lineSpace, this._measures[this._cursor.measure]);
-      copyValues(sourceMeasure.syllabes, 'syllabes', startSection.beat, sourceMeasure.length * this._lineSpace, this._measures[this._cursor.measure]);
+      copyValues(sourceMeasure.syllables, 'syllables', startSection.beat, sourceMeasure.length * this._lineSpace, this._measures[this._cursor.measure]);
       // Then we iterate the following measures until we reach the endSectionMeasureIndex
       for (let i = this._cursor.measure; i < this._cursor.measure + measuresToCopy; ++i) {
         let sourceMeasure = this._measures[parseInt(event.target.dataset.measure) + (i - this._cursor.measure)];
@@ -1011,7 +1041,7 @@ class TabMaker {
               dynamics: [],
               chords: [],
               sections: [],
-              syllabes: []
+              syllables: []
             });
           }
           this._canvas.height += this._tabLineHeight + this._tabLineMargin;
@@ -1025,14 +1055,14 @@ class TabMaker {
         copyValues(sourceMeasure.chords, 'chords', 0, length, this._measures[i]);
         copyValues(sourceMeasure.dynamics, 'dynamics', 0, length, this._measures[i]);
         copyValues(sourceMeasure.notes, 'notes', 0, length, this._measures[i]);
-        copyValues(sourceMeasure.syllabes, 'syllabes', 0, length, this._measures[i]);
+        copyValues(sourceMeasure.syllables, 'syllables', 0, length, this._measures[i]);
       }
       // Finally, we update the last measure before next section
       sourceMeasure = this._measures[parseInt(event.target.dataset.measure) + endSectionMeasureIndex];
       copyValues(sourceMeasure.chords, 'chords', startSection.beat, endSectionBeat, this._measures[this._cursor.measure + measuresToCopy]);
       copyValues(sourceMeasure.dynamics, 'dynamics', startSection.beat, endSectionBeat, this._measures[this._cursor.measure + measuresToCopy]);
       copyValues(sourceMeasure.notes, 'notes', startSection.beat, endSectionBeat, this._measures[this._cursor.measure + measuresToCopy]);
-      copyValues(sourceMeasure.syllabes, 'syllabes', startSection.beat, endSectionBeat, this._measures[this._cursor.measure + measuresToCopy]);
+      copyValues(sourceMeasure.syllables, 'syllables', startSection.beat, endSectionBeat, this._measures[this._cursor.measure + measuresToCopy]);
     }
 
     this._refreshTab();
@@ -1089,30 +1119,30 @@ class TabMaker {
   }
 
 
-  _addSyllabe() {
-    this._toggleClickedSvg('add-syllabe');
-    const syllabeValue = document.getElementById('syllabe').value;
-    if (syllabeValue !== '') {
-      const syllabe = {
+  _addSyllable() {
+    this._toggleClickedSvg('add-syllable');
+    const syllableValue = document.getElementById('syllable').value;
+    if (syllableValue !== '') {
+      const syllable = {
         beat: this._cursor.beat,
-        value: syllabeValue
+        value: syllableValue
       };
 
       let exists = false;
       let existingIndex = -1;
-      for (let i = 0; i < this._measures[this._cursor.measure].syllabes.length; ++i) {
-        const savedSyllabe = this._measures[this._cursor.measure].syllabes[i];
-        if (JSON.stringify(savedSyllabe) === JSON.stringify(syllabe)) { // Note already saved
+      for (let i = 0; i < this._measures[this._cursor.measure].syllables.length; ++i) {
+        const savedSyllable = this._measures[this._cursor.measure].syllables[i];
+        if (JSON.stringify(savedSyllable) === JSON.stringify(syllable)) { // Note already saved
           exists = true;
-        } else if (savedSyllabe.value !== syllabe.value && savedSyllabe.beat === syllabe.beat) {
+        } else if (savedSyllable.value !== syllable.value && savedSyllable.beat === syllable.beat) {
           existingIndex = i;
         }
       }
 
       if (existingIndex !== -1) { // Replace existing note if already exists
-        this._measures[this._cursor.measure].syllabes[existingIndex] = syllabe;
+        this._measures[this._cursor.measure].syllables[existingIndex] = syllable;
       } else if (!exists) { // Create note if no matching note were found in measure
-        this._measures[this._cursor.measure].syllabes.push(syllabe);
+        this._measures[this._cursor.measure].syllables.push(syllable);
       }
 
       this._refreshTab();
@@ -1120,11 +1150,11 @@ class TabMaker {
   }
 
 
-  _removeSyllabe() {
-    this._toggleClickedSvg('remove-syllabe');
-    for (let i = 0; i < this._measures[this._cursor.measure].syllabes.length; ++i) {
-      if (this._measures[this._cursor.measure].syllabes[i].beat === this._cursor.beat) {
-        this._measures[this._cursor.measure].syllabes.splice(i, 1);
+  _removeSyllable() {
+    this._toggleClickedSvg('remove-syllable');
+    for (let i = 0; i < this._measures[this._cursor.measure].syllables.length; ++i) {
+      if (this._measures[this._cursor.measure].syllables[i].beat === this._cursor.beat) {
+        this._measures[this._cursor.measure].syllables.splice(i, 1);
         this._refreshTab();
         break;
       }
@@ -1229,6 +1259,30 @@ class TabMaker {
   }
 
 
+  _printingPageOffset(yOffset, lineNumber) {
+    let threshold = 8;
+    let offsetValue = 260;
+
+    if (this._type === 'Bass') {
+      threshold = 10;
+      offsetValue = 80;
+    }
+
+    for (let i = threshold; i <= lineNumber; i += threshold) {
+      yOffset += offsetValue;
+      if (i === threshold && this._type === 'Guitar') {
+        threshold = 9;
+        offsetValue = 150;
+      } else if (i === threshold && this._type === 'Bass') {
+        threshold = 11;
+        offsetValue = 60;
+      }
+    }
+
+    return yOffset;
+  }
+
+
   // Exporting
 
 
@@ -1238,7 +1292,7 @@ class TabMaker {
     this._cursor.x = -9000;
 
     const resFactor = this._resolutionFactor;
-    this._resolutionFactor = 3;
+    this._resolutionFactor = 2;
     this._lineSpace = 12 * this._resolutionFactor;
     this._tabLineMargin = this._lineSpace * 8;
     this._fontSize = 10 * this._resolutionFactor;
@@ -1248,42 +1302,45 @@ class TabMaker {
     this._measureLength = 0;
     this._measurePerLines = 0;
 
-    this._init();
+    this._init(true);
 
-    const imgData = this._canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4', true);
-    let position = 0;
+    setTimeout(() => {
+      const imgData = this._canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4', true);
+      let position = 0;
 
-    const imgWidth = 200;
-    const pageHeight = 297;
-    const imgHeight = this._canvas.height * imgWidth / this._canvas.width;
-    let heightLeft = imgHeight;
+      const imgWidth = 200;
+      const pageHeight = 297;
+      const imgHeight = this._canvas.height * imgWidth / this._canvas.width;
+      let heightLeft = imgHeight;
 
-    pdf.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight, undefined, 'FAST');
-    heightLeft -= pageHeight;
-
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
       pdf.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
-    }
 
-    pdf.save(`${this._composer} - ${this._name}.pdf`);
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
 
-    // Restore cursor x pos and resolution factor then refresh tab
-    this._cursor.x = xPos;
-    this._resolutionFactor = resFactor;
-    this._lineSpace = 12 * this._resolutionFactor;
-    this._tabLineMargin = this._lineSpace * 8;
-    this._fontSize = 10 * this._resolutionFactor;
-    this._headerHeight = 150 * this._resolutionFactor;
-    this._tabLineHeight = 0;
-    this._lineLength = 0;
-    this._measureLength = 0;
-    this._measurePerLines = 0;
+      pdf.save(`${this._composer} - ${this._name}.pdf`);
 
-    this._init();
+      // Restore cursor x pos and resolution factor then refresh tab
+      this._cursor.x = xPos;
+      this._resolutionFactor = resFactor;
+      this._lineSpace = 12 * this._resolutionFactor;
+      this._tabLineMargin = this._lineSpace * 8;
+      this._fontSize = 10 * this._resolutionFactor;
+      this._headerHeight = 150 * this._resolutionFactor;
+      this._tabLineHeight = 0;
+      this._lineLength = 0;
+      this._measureLength = 0;
+      this._measurePerLines = 0;
+
+      this._init();
+      this._refreshTab();
+    });
   }
 
 
