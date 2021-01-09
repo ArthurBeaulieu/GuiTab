@@ -98,11 +98,15 @@ class GuiTab {
         this._evtIds.push(Events.addEvent('click', deleteIcon, this._removeExistingProject, this));
       }
     }
+
+    requestAnimationFrame(() => document.querySelector('#loading-overlay').classList.add('hidden'));
   }
 
 
   _droppedTab(event) {
     if (event.dataTransfer && event.dataTransfer.files) {
+      document.querySelector('#loading-overlay').classList.remove('hidden');
+
       const files = event.dataTransfer.files;
       for (let i = 0, file; file = files[i]; ++i) {
         const reader = new FileReader();
@@ -118,6 +122,8 @@ class GuiTab {
 
 
   _createNewProject() {
+    requestAnimationFrame(() => document.querySelector('#loading-overlay').classList.remove('hidden'));
+
     this._homeContainer.style.display = 'none';
     this._projectOptions.style.display = 'flex';
 
@@ -167,10 +173,13 @@ class GuiTab {
     };
 
     const evtId = Events.addEvent('click', submit, createNewProject, this);
+    requestAnimationFrame(() => document.querySelector('#loading-overlay').classList.add('hidden'));
   }
 
 
   _createExistingProject(event) {
+    requestAnimationFrame(() => document.querySelector('#loading-overlay').classList.remove('hidden'));
+
     this._homeContainer.style.display = 'none';
     this._projectContainer.style.display = 'flex';
     const item = JSON.parse(window.localStorage.getItem(event.currentTarget.dataset.key));
@@ -214,6 +223,7 @@ class GuiTab {
 
 
   _removeExistingProject(event) {
+    requestAnimationFrame(() => document.querySelector('#loading-overlay').classList.remove('hidden'));
     event.stopPropagation();
     window.localStorage.removeItem(event.target.parentNode.dataset.key);
     this._loadProjectFromLs();
@@ -221,6 +231,8 @@ class GuiTab {
 
 
   _homePage() {
+    requestAnimationFrame(() => document.querySelector('#loading-overlay').classList.remove('hidden'));
+
     if (this._tab !== null) {
       this._tab.destroy();
       this._tab = null;
@@ -248,6 +260,8 @@ class GuiTab {
 
 
   _openProject(options) {
+    requestAnimationFrame(() => document.querySelector('#loading-overlay').classList.remove('hidden'));
+
     this._projectOptions.style.display = 'none';
     this._projectContainer.style.display = 'flex';
 

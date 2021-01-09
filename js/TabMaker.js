@@ -73,6 +73,8 @@ class TabMaker {
 
     this._init();
     this._events();
+
+    requestAnimationFrame(() => document.querySelector('#loading-overlay').classList.add('hidden'));
   }
 
 
@@ -259,7 +261,7 @@ class TabMaker {
         type: this._type,
         timeSignature: this._timeSignature,
         instrumentType: this._type,
-        version: '0.1.6'
+        version: '0.1.7'
       },
       measures: this._measures
     }));
